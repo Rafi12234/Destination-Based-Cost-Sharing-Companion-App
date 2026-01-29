@@ -10,22 +10,18 @@ import { User } from 'firebase/auth';
 import { signOut, onAuthChange } from '@/firebase/auth';
 import {
   getUserProfile,
-  createOrUpdateTrip,
-  deactivateUserTrips,
-  subscribeToActiveTripsByGender,
   getOrCreateChat,
   getUserProfiles,
+  createDestination,
+  deleteDestination,
+  updateDestinationLocation,
+  subscribeToDestinations,
 } from '@/firebase/firestore';
-import {
-  publishLiveLocation,
-  removeLiveLocation,
-  subscribeMultipleLiveLocations,
-} from '@/firebase/rtdb';
 import MapView from '@/components/MapView';
 import DestinationSearch from '@/components/DestinationSearch';
 import OnlineToggle from '@/components/OnlineToggle';
 import MatchList from '@/components/MatchList';
-import { UserProfile, Coordinates, Trip, MatchedUser } from '@/types/models';
+import { UserProfile, Coordinates, MatchedUser } from '@/types/models';
 import { haversineDistance, destinationsMatch } from '@/utils/geo';
 
 const MapPage: React.FC = () => {
@@ -46,7 +42,6 @@ const MapPage: React.FC = () => {
   // Online/Offline state
   const [isOnline, setIsOnline] = useState(false);
   const [isTogglingOnline, setIsTogglingOnline] = useState(false);
-  const [_currentTripId, setCurrentTripId] = useState<string | null>(null);
 
   // Matched users state
   const [matchedUsers, setMatchedUsers] = useState<MatchedUser[]>([]);
@@ -54,8 +49,7 @@ const MapPage: React.FC = () => {
 
   // Refs for cleanup
   const watchIdRef = useRef<number | null>(null);
-  const tripsUnsubscribeRef = useRef<(() => void) | null>(null);
-  const liveLocationsUnsubscribeRef = useRef<(() => void) | null>(null);
+  const destinationsUnsubscribeRef = useRef<(() => void) | null>(null);
   const lastLocationRef = useRef<Coordinates | null>(null);
   const lastUpdateTimeRef = useRef<number>(0);
 
@@ -113,11 +107,8 @@ const MapPage: React.FC = () => {
       if (watchIdRef.current !== null) {
         navigator.geolocation.clearWatch(watchIdRef.current);
       }
-      if (tripsUnsubscribeRef.current) {
-        tripsUnsubscribeRef.current();
-      }
-      if (liveLocationsUnsubscribeRef.current) {
-        liveLocationsUnsubscribeRef.current();
+      if (destinationsUnsubscribeRef.current) {
+        destinationsUnsubscribeRef.current();
       }
     };
   }, []);
@@ -126,112 +117,6 @@ const MapPage: React.FC = () => {
   const handleDestinationSelect = (name: string, coords: Coordinates) => {
     setDestinationName(name);
     setDestinationCoords(coords);
-    
-    // When destination is selected, start looking for nearby users
-    if (userProfile && myLocation) {
-      subscribeToNearbyUsers(coords);
-    }
-  };
-
-  // ============ SUBSCRIBE TO NEARBY USERS (when destination selected) ============
-  const subscribeToNearbyUsers = (destCoords: Coordinates) => {
-    if (!userProfile) return;
-
-    setIsLoadingMatches(true);
-
-    // Unsubscribe from previous listeners
-    if (tripsUnsubscribeRef.current) {
-      tripsUnsubscribeRef.current();
-    }
-    if (liveLocationsUnsubscribeRef.current) {
-      liveLocationsUnsubscribeRef.current();
-    }
-
-    // Subscribe to active trips with same gender
-    tripsUnsubscribeRef.current = subscribeToActiveTripsByGender(
-      userProfile.gender,
-      async (trips) => {
-        // Filter trips:
-        // 1. Not my own trip
-        // 2. Destination matches (within 500m)
-        const matchingTrips = trips.filter((trip) => {
-          if (trip.uid === user?.uid) return false;
-
-          const tripDestination: Coordinates = {
-            lat: trip.destinationLat,
-            lng: trip.destinationLng,
-          };
-
-          return destinationsMatch(destCoords, tripDestination);
-        });
-
-        if (matchingTrips.length === 0) {
-          setMatchedUsers([]);
-          setIsLoadingMatches(false);
-
-          if (liveLocationsUnsubscribeRef.current) {
-            liveLocationsUnsubscribeRef.current();
-            liveLocationsUnsubscribeRef.current = null;
-          }
-          return;
-        }
-
-        // Fetch user profiles for matching trips
-        const uids = matchingTrips.map((t) => t.uid);
-        const profiles = await getUserProfiles(uids);
-
-        // Create a map of trips by uid
-        const tripsByUid = new Map<string, Trip>();
-        matchingTrips.forEach((trip) => {
-          tripsByUid.set(trip.uid, trip);
-        });
-
-        // Initialize matched users without live locations
-        const initialMatches: MatchedUser[] = uids
-          .filter((uid) => profiles.has(uid))
-          .map((uid) => ({
-            uid,
-            profile: profiles.get(uid)!,
-            trip: tripsByUid.get(uid)!,
-            liveLocation: null,
-            distance: Infinity,
-            isNear: false,
-          }));
-
-        setMatchedUsers(initialMatches);
-
-        // Subscribe to live locations of matched users
-        if (liveLocationsUnsubscribeRef.current) {
-          liveLocationsUnsubscribeRef.current();
-        }
-
-        liveLocationsUnsubscribeRef.current = subscribeMultipleLiveLocations(
-          uids,
-          (uid, location) => {
-            setMatchedUsers((prev) => {
-              return prev.map((match) => {
-                if (match.uid === uid) {
-                  const distance =
-                    location && myLocation
-                      ? haversineDistance(myLocation, { lat: location.lat, lng: location.lng })
-                      : Infinity;
-
-                  return {
-                    ...match,
-                    liveLocation: location,
-                    distance,
-                    isNear: distance <= 2000, // Within 2km
-                  };
-                }
-                return match;
-              });
-            });
-          }
-        );
-
-        setIsLoadingMatches(false);
-      }
-    );
   };
 
   // ============ GO ONLINE ============
@@ -244,37 +129,26 @@ const MapPage: React.FC = () => {
     setIsLoadingMatches(true);
 
     try {
-      // 1. Create/update trip in Firestore
-      const tripId = await createOrUpdateTrip({
+      // 1. Create destination document in Firestore
+      await createDestination({
         uid: user.uid,
+        name: userProfile.name,
         gender: userProfile.gender,
         destinationName: destinationName,
         destinationLat: destinationCoords.lat,
         destinationLng: destinationCoords.lng,
-        status: 'active',
-        updatedAt: Date.now(),
+        currentLat: myLocation.lat,
+        currentLng: myLocation.lng,
+        phone: userProfile.phone,
         createdAt: Date.now(),
-      });
-      setCurrentTripId(tripId);
-
-      // 2. Publish initial live location to Realtime DB
-      await publishLiveLocation(user.uid, {
-        lat: myLocation.lat,
-        lng: myLocation.lng,
-        heading: null,
         updatedAt: Date.now(),
-        tripId: tripId,
-        isOnline: true,
-        gender: userProfile.gender,
-        destinationLat: destinationCoords.lat,
-        destinationLng: destinationCoords.lng,
       });
 
-      // 3. Start GPS watch for continuous location updates
-      startLocationWatch(tripId);
+      // 2. Start GPS watch for continuous location updates
+      startLocationWatch();
 
-      // 4. Subscribe to active trips with same gender
-      subscribeToMatches();
+      // 3. Subscribe to destinations with same gender
+      subscribeToMatchingDestinations();
 
       setIsOnline(true);
     } catch (error) {
@@ -298,27 +172,17 @@ const MapPage: React.FC = () => {
         watchIdRef.current = null;
       }
 
-      // 2. Remove live location from Realtime DB
-      await removeLiveLocation(user.uid);
+      // 2. Delete destination document from Firestore
+      await deleteDestination(user.uid);
 
-      // 3. Deactivate trip in Firestore
-      await deactivateUserTrips(user.uid);
-
-      // 4. Unsubscribe from trips listener
-      if (tripsUnsubscribeRef.current) {
-        tripsUnsubscribeRef.current();
-        tripsUnsubscribeRef.current = null;
+      // 3. Unsubscribe from destinations listener
+      if (destinationsUnsubscribeRef.current) {
+        destinationsUnsubscribeRef.current();
+        destinationsUnsubscribeRef.current = null;
       }
 
-      // 5. Unsubscribe from live locations listener
-      if (liveLocationsUnsubscribeRef.current) {
-        liveLocationsUnsubscribeRef.current();
-        liveLocationsUnsubscribeRef.current = null;
-      }
-
-      // 6. Clear state
+      // 4. Clear state
       setMatchedUsers([]);
-      setCurrentTripId(null);
       setIsOnline(false);
     } catch (error) {
       console.error('Error going offline:', error);
@@ -347,7 +211,7 @@ const MapPage: React.FC = () => {
   };
 
   // ============ LOCATION WATCH ============
-  const startLocationWatch = (tripId: string) => {
+  const startLocationWatch = () => {
     if (watchIdRef.current !== null) {
       navigator.geolocation.clearWatch(watchIdRef.current);
     }
@@ -369,22 +233,12 @@ const MapPage: React.FC = () => {
           : Infinity;
 
         if (distanceMoved > 10 || timeSinceLastUpdate > 2000) {
-          // Publish location update
-          if (user && userProfile && destinationCoords) {
+          // Update location in Firestore Destination document
+          if (user) {
             try {
-              await publishLiveLocation(user.uid, {
-                lat: newLocation.lat,
-                lng: newLocation.lng,
-                heading: position.coords.heading,
-                updatedAt: now,
-                tripId: tripId,
-                isOnline: true,
-                gender: userProfile.gender,
-                destinationLat: destinationCoords.lat,
-                destinationLng: destinationCoords.lng,
-              });
+              await updateDestinationLocation(user.uid, newLocation.lat, newLocation.lng);
             } catch (error) {
-              console.error('Error publishing location:', error);
+              console.error('Error updating location:', error);
             }
           }
 
@@ -407,101 +261,80 @@ const MapPage: React.FC = () => {
     );
   };
 
-  // ============ SUBSCRIBE TO MATCHES ============
-  const subscribeToMatches = () => {
+  // ============ SUBSCRIBE TO MATCHING DESTINATIONS ============
+  const subscribeToMatchingDestinations = () => {
     if (!userProfile || !destinationCoords) return;
 
-    // Unsubscribe from previous listeners
-    if (tripsUnsubscribeRef.current) {
-      tripsUnsubscribeRef.current();
-    }
-    if (liveLocationsUnsubscribeRef.current) {
-      liveLocationsUnsubscribeRef.current();
+    // Unsubscribe from previous listener
+    if (destinationsUnsubscribeRef.current) {
+      destinationsUnsubscribeRef.current();
     }
 
-    // Subscribe to active trips with same gender
-    tripsUnsubscribeRef.current = subscribeToActiveTripsByGender(
+    // Subscribe to all destinations with same gender
+    destinationsUnsubscribeRef.current = subscribeToDestinations(
       userProfile.gender,
-      async (trips) => {
-        // Filter trips:
-        // 1. Not my own trip
+      async (destinations) => {
+        // Filter destinations:
+        // 1. Not my own destination
         // 2. Destination matches (within 500m)
-        const matchingTrips = trips.filter((trip) => {
-          if (trip.uid === user?.uid) return false;
+        // 3. User is within 2km of me
+        const matchingDestinations = destinations.filter((dest) => {
+          if (dest.uid === user?.uid) return false;
 
-          const tripDestination: Coordinates = {
-            lat: trip.destinationLat,
-            lng: trip.destinationLng,
+          const destTarget: Coordinates = {
+            lat: dest.destinationLat,
+            lng: dest.destinationLng,
           };
 
-          return destinationsMatch(destinationCoords, tripDestination);
+          // Check if destinations match (within 500m)
+          if (!destinationsMatch(destinationCoords, destTarget)) return false;
+
+          // Check if user is within 2km of my location
+          if (myLocation) {
+            const userLocation: Coordinates = {
+              lat: dest.currentLat,
+              lng: dest.currentLng,
+            };
+            const distance = haversineDistance(myLocation, userLocation);
+            return distance <= 2000; // Within 2km
+          }
+
+          return false;
         });
 
-        if (matchingTrips.length === 0) {
+        if (matchingDestinations.length === 0) {
           setMatchedUsers([]);
           setIsLoadingMatches(false);
-
-          // Unsubscribe from live locations
-          if (liveLocationsUnsubscribeRef.current) {
-            liveLocationsUnsubscribeRef.current();
-            liveLocationsUnsubscribeRef.current = null;
-          }
           return;
         }
 
-        // Fetch user profiles for matching trips
-        const uids = matchingTrips.map((t) => t.uid);
+        // Fetch user profiles for matching destinations
+        const uids = matchingDestinations.map((d) => d.uid);
         const profiles = await getUserProfiles(uids);
 
-        // Create a map of trips by uid
-        const tripsByUid = new Map<string, Trip>();
-        matchingTrips.forEach((trip) => {
-          tripsByUid.set(trip.uid, trip);
-        });
+        // Create matched users list
+        const matches: MatchedUser[] = matchingDestinations
+          .filter((dest) => profiles.has(dest.uid))
+          .map((dest) => {
+            const userLocation: Coordinates = {
+              lat: dest.currentLat,
+              lng: dest.currentLng,
+            };
+            const distance = myLocation
+              ? haversineDistance(myLocation, userLocation)
+              : Infinity;
 
-        // Initialize matched users without live locations
-        const initialMatches: MatchedUser[] = uids
-          .filter((uid) => profiles.has(uid))
-          .map((uid) => ({
-            uid,
-            profile: profiles.get(uid)!,
-            trip: tripsByUid.get(uid)!,
-            liveLocation: null,
-            distance: Infinity,
-            isNear: false,
-          }));
+            return {
+              uid: dest.uid,
+              profile: profiles.get(dest.uid)!,
+              destination: dest,
+              distance,
+              isNear: distance <= 2000,
+            };
+          })
+          .sort((a, b) => a.distance - b.distance);
 
-        setMatchedUsers(initialMatches);
-
-        // Subscribe to live locations of matched users
-        if (liveLocationsUnsubscribeRef.current) {
-          liveLocationsUnsubscribeRef.current();
-        }
-
-        liveLocationsUnsubscribeRef.current = subscribeMultipleLiveLocations(
-          uids,
-          (uid, location) => {
-            setMatchedUsers((prev) => {
-              return prev.map((match) => {
-                if (match.uid === uid) {
-                  const distance =
-                    location && myLocation
-                      ? haversineDistance(myLocation, { lat: location.lat, lng: location.lng })
-                      : Infinity;
-
-                  return {
-                    ...match,
-                    liveLocation: location,
-                    distance,
-                    isNear: distance <= 2000,
-                  };
-                }
-                return match;
-              });
-            });
-          }
-        );
-
+        setMatchedUsers(matches);
         setIsLoadingMatches(false);
       }
     );
@@ -512,10 +345,10 @@ const MapPage: React.FC = () => {
     setMatchedUsers((prev) => {
       return prev
         .map((match) => {
-          if (match.liveLocation) {
+          if (match.destination) {
             const distance = haversineDistance(myNewLocation, {
-              lat: match.liveLocation.lat,
-              lng: match.liveLocation.lng,
+              lat: match.destination.currentLat,
+              lng: match.destination.currentLng,
             });
             return {
               ...match,
@@ -615,12 +448,10 @@ const MapPage: React.FC = () => {
       )}
 
       {/* Status Indicator */}
-      <div className={`status-indicator ${isOnline ? 'online' : destinationCoords ? 'searching' : 'offline'}`}>
+      <div className={`status-indicator ${isOnline ? 'online' : 'offline'}`}>
         {isOnline 
-          ? '🟢 Online - Sharing your location' 
-          : destinationCoords 
-            ? '🔵 Searching - Your location is hidden but you can see nearby riders'
-            : '🔴 Offline - Enter a destination to see nearby riders'}
+          ? '🟢 Online - Sharing your location & finding matches' 
+          : '🔴 Offline - Go online to find nearby riders'}
         {destinationName && (
           <span className="destination-display">📍 Going to: {destinationName}</span>
         )}
@@ -635,34 +466,28 @@ const MapPage: React.FC = () => {
             isOnline={isOnline}
             matchedUsers={sortedMatches}
             onUserClick={handleChatClick}
-            destinationCoords={destinationCoords}
           />
         </div>
 
         {/* Side Panel - Match List */}
         <div className="side-panel">
-          {destinationCoords ? (
-            <>
-              <MatchList
-                matches={sortedMatches}
-                onChatClick={handleChatClick}
-                isLoading={isLoadingMatches}
-              />
-              {!isOnline && sortedMatches.length > 0 && (
-                <div className="go-online-hint">
-                  💡 Go online to let others see you and start chatting!
-                </div>
-              )}
-            </>
+          {isOnline ? (
+            <MatchList
+              matches={sortedMatches}
+              onChatClick={handleChatClick}
+              isLoading={isLoadingMatches}
+            />
           ) : (
             <div className="offline-message">
               <span className="offline-icon">📍</span>
-              <h3>Enter Your Destination</h3>
-              <p>Search for a destination to see nearby riders heading the same way.</p>
+              <h3>{destinationCoords ? 'Ready to Go!' : 'Enter Your Destination'}</h3>
+              <p>{destinationCoords 
+                ? 'Click "Go Online" to share your location and find matches.' 
+                : 'Search for a destination to get started.'}</p>
               <ol>
                 <li>Enter your destination above</li>
-                <li>See riders within 2km radius</li>
-                <li>Go online to share your location</li>
+                <li>Click "Go Online"</li>
+                <li>See matched riders within 2km!</li>
               </ol>
             </div>
           )}
@@ -751,11 +576,6 @@ const MapPage: React.FC = () => {
           color: #2e7d32;
         }
 
-        .status-indicator.searching {
-          background: #e3f2fd;
-          color: #1565c0;
-        }
-
         .status-indicator.offline {
           background: #fafafa;
           color: #757575;
@@ -766,12 +586,7 @@ const MapPage: React.FC = () => {
           opacity: 0.8;
         }
 
-        .go-online-hint {
-          margin-top: 12px;
-          padding: 12px 16px;
-          background: #fff3e0;
-          color: #e65100;
-          border-radius: 8px;
+        .main-content {
           font-size: 13px;
           text-align: center;
         }

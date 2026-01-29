@@ -130,7 +130,6 @@ interface MapViewProps {
   isOnline: boolean;
   matchedUsers: MatchedUser[];
   onUserClick?: (uid: string) => void;
-  destinationCoords?: Coordinates | null;
 }
 
 const MapView: React.FC<MapViewProps> = ({
@@ -138,7 +137,6 @@ const MapView: React.FC<MapViewProps> = ({
   isOnline,
   matchedUsers,
   onUserClick,
-  destinationCoords,
 }) => {
   // Default center (will be updated when location is available)
   const defaultCenter: Coordinates = myLocation || { lat: 40.7128, lng: -74.006 };
@@ -169,14 +167,14 @@ const MapView: React.FC<MapViewProps> = ({
           </Marker>
         )}
         
-        {/* 2km radius circle (shows when destination is selected) */}
-        {myLocation && destinationCoords && (
+        {/* 2km radius circle (shows when online) */}
+        {isOnline && myLocation && (
           <Circle
             center={[myLocation.lat, myLocation.lng]}
             radius={2000}
             pathOptions={{
-              color: isOnline ? '#4CAF50' : '#2196F3',
-              fillColor: isOnline ? '#4CAF50' : '#2196F3',
+              color: '#4CAF50',
+              fillColor: '#4CAF50',
               fillOpacity: 0.1,
               weight: 2,
               dashArray: '10, 5',
@@ -186,10 +184,10 @@ const MapView: React.FC<MapViewProps> = ({
         
         {/* Matched user markers (shows nearby users) */}
         {matchedUsers.map((match) =>
-            match.liveLocation ? (
+            match.destination ? (
               <AnimatedMarker
                 key={match.uid}
-                position={{ lat: match.liveLocation.lat, lng: match.liveLocation.lng }}
+                position={{ lat: match.destination.currentLat, lng: match.destination.currentLng }}
                 icon={createCustomIcon(match.isNear ? '#4CAF50' : '#9E9E9E', match.isNear)}
               >
                 <Popup>
@@ -201,7 +199,11 @@ const MapView: React.FC<MapViewProps> = ({
                     </span>
                     <br />
                     <span style={{ fontSize: '12px', color: '#666' }}>
-                      🎯 {match.trip.destinationName}
+                      🎯 {match.destination.destinationName}
+                    </span>
+                    <br />
+                    <span style={{ fontSize: '12px', color: '#666' }}>
+                      📞 {match.destination.phone}
                     </span>
                     <br />
                     <button

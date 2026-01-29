@@ -9,6 +9,7 @@ import {
   getDoc,
   getDocs,
   updateDoc,
+  deleteDoc,
   collection,
   query,
   where,
@@ -18,7 +19,7 @@ import {
   Unsubscribe,
 } from 'firebase/firestore';
 import { db } from './firebase';
-import { UserProfile, Trip, Chat, Message } from '@/types/models';
+import { UserProfile, Trip, Chat, Message, Destination } from '@/types/models';
 
 // ============ USER OPERATIONS ============
 
@@ -70,6 +71,80 @@ export async function getUserProfiles(uids: string[]): Promise<Map<string, UserP
   }
   
   return profiles;
+}
+
+// ============ DESTINATION OPERATIONS ============
+
+/**
+ * Create or update a destination document when user goes online
+ * @param destination - The destination data to save
+ */
+export async function createDestination(destination: Destination): Promise<void> {
+  await setDoc(doc(db, 'Destination', destination.uid), {
+    ...destination,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  });
+}
+
+/**
+ * Update user's current location in destination document
+ * @param uid - User's ID
+ * @param lat - Current latitude
+ * @param lng - Current longitude
+ */
+export async function updateDestinationLocation(uid: string, lat: number, lng: number): Promise<void> {
+  await updateDoc(doc(db, 'Destination', uid), {
+    currentLat: lat,
+    currentLng: lng,
+    updatedAt: Date.now(),
+  });
+}
+
+/**
+ * Delete a destination document when user goes offline
+ * @param uid - The user's unique ID
+ */
+export async function deleteDestination(uid: string): Promise<void> {
+  await deleteDoc(doc(db, 'Destination', uid));
+}
+
+/**
+ * Get a destination by UID
+ * @param uid - The user's unique ID
+ * @returns The destination or null if not found
+ */
+export async function getDestination(uid: string): Promise<Destination | null> {
+  const docRef = doc(db, 'Destination', uid);
+  const docSnap = await getDoc(docRef);
+  
+  if (docSnap.exists()) {
+    return docSnap.data() as Destination;
+  }
+  return null;
+}
+
+/**
+ * Subscribe to all active destinations for matching
+ * @param gender - The gender to filter by (users only see same gender)
+ * @param callback - Function to call when destinations change
+ * @returns Unsubscribe function
+ */
+export function subscribeToDestinations(
+  gender: 'male' | 'female',
+  callback: (destinations: Destination[]) => void
+): Unsubscribe {
+  const q = query(
+    collection(db, 'Destination'),
+    where('gender', '==', gender)
+  );
+  
+  return onSnapshot(q, (querySnapshot) => {
+    const destinations = querySnapshot.docs.map((doc) => ({
+      ...doc.data(),
+    })) as Destination[];
+    callback(destinations);
+  });
 }
 
 // ============ TRIP OPERATIONS ============

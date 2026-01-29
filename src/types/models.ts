@@ -26,6 +26,22 @@ export interface Trip {
   updatedAt: number;
 }
 
+// Destination document stored in Firestore Destination/{uid}
+// This is the active destination for matching users
+export interface Destination {
+  uid: string;
+  name: string;
+  gender: 'male' | 'female';
+  destinationName: string;
+  destinationLat: number;
+  destinationLng: number;
+  currentLat: number;
+  currentLng: number;
+  phone: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
 // Live location data stored in Realtime Database liveLocations/{uid}
 export interface LiveLocation {
   lat: number;
@@ -60,8 +76,7 @@ export interface Message {
 export interface MatchedUser {
   uid: string;
   profile: UserProfile;
-  trip: Trip;
-  liveLocation: LiveLocation | null;
+  destination: Destination;
   distance: number; // Distance from current user in meters
   isNear: boolean; // Within 2km radius
 }

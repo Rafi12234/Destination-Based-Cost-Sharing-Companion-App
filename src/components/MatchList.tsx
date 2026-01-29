@@ -63,7 +63,8 @@ const MatchList: React.FC<MatchListProps> = ({
               </div>
               <div className="match-details">
                 <span className="distance">📍 {formatDistance(match.distance)}</span>
-                <span className="destination">🎯 {match.trip.destinationName}</span>
+                <span className="destination">🎯 {match.destination.destinationName}</span>
+                <span className="phone">📞 {match.destination.phone}</span>
               </div>
             </div>
             
