@@ -27,7 +27,7 @@ import { UserProfile, Trip, Chat, Message } from '@/types/models';
  * @param user - The user profile data to save
  */
 export async function createUserProfile(user: UserProfile): Promise<void> {
-  await setDoc(doc(db, 'users', user.uid), {
+  await setDoc(doc(db, 'Profile', user.uid), {
     ...user,
     createdAt: Date.now(),
   });
@@ -39,7 +39,7 @@ export async function createUserProfile(user: UserProfile): Promise<void> {
  * @returns The user profile or null if not found
  */
 export async function getUserProfile(uid: string): Promise<UserProfile | null> {
-  const docRef = doc(db, 'users', uid);
+  const docRef = doc(db, 'Profile', uid);
   const docSnap = await getDoc(docRef);
   
   if (docSnap.exists()) {
@@ -60,7 +60,7 @@ export async function getUserProfiles(uids: string[]): Promise<Map<string, UserP
   const batchSize = 10;
   for (let i = 0; i < uids.length; i += batchSize) {
     const batch = uids.slice(i, i + batchSize);
-    const q = query(collection(db, 'users'), where('uid', 'in', batch));
+    const q = query(collection(db, 'Profile'), where('uid', 'in', batch));
     const querySnapshot = await getDocs(q);
     
     querySnapshot.forEach((doc) => {
