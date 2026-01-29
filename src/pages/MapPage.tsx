@@ -126,6 +126,112 @@ const MapPage: React.FC = () => {
   const handleDestinationSelect = (name: string, coords: Coordinates) => {
     setDestinationName(name);
     setDestinationCoords(coords);
+    
+    // When destination is selected, start looking for nearby users
+    if (userProfile && myLocation) {
+      subscribeToNearbyUsers(coords);
+    }
+  };
+
+  // ============ SUBSCRIBE TO NEARBY USERS (when destination selected) ============
+  const subscribeToNearbyUsers = (destCoords: Coordinates) => {
+    if (!userProfile) return;
+
+    setIsLoadingMatches(true);
+
+    // Unsubscribe from previous listeners
+    if (tripsUnsubscribeRef.current) {
+      tripsUnsubscribeRef.current();
+    }
+    if (liveLocationsUnsubscribeRef.current) {
+      liveLocationsUnsubscribeRef.current();
+    }
+
+    // Subscribe to active trips with same gender
+    tripsUnsubscribeRef.current = subscribeToActiveTripsByGender(
+      userProfile.gender,
+      async (trips) => {
+        // Filter trips:
+        // 1. Not my own trip
+        // 2. Destination matches (within 500m)
+        const matchingTrips = trips.filter((trip) => {
+          if (trip.uid === user?.uid) return false;
+
+          const tripDestination: Coordinates = {
+            lat: trip.destinationLat,
+            lng: trip.destinationLng,
+          };
+
+          return destinationsMatch(destCoords, tripDestination);
+        });
+
+        if (matchingTrips.length === 0) {
+          setMatchedUsers([]);
+          setIsLoadingMatches(false);
+
+          if (liveLocationsUnsubscribeRef.current) {
+            liveLocationsUnsubscribeRef.current();
+            liveLocationsUnsubscribeRef.current = null;
+          }
+          return;
+        }
+
+        // Fetch user profiles for matching trips
+        const uids = matchingTrips.map((t) => t.uid);
+        const profiles = await getUserProfiles(uids);
+
+        // Create a map of trips by uid
+        const tripsByUid = new Map<string, Trip>();
+        matchingTrips.forEach((trip) => {
+          tripsByUid.set(trip.uid, trip);
+        });
+
+        // Initialize matched users without live locations
+        const initialMatches: MatchedUser[] = uids
+          .filter((uid) => profiles.has(uid))
+          .map((uid) => ({
+            uid,
+            profile: profiles.get(uid)!,
+            trip: tripsByUid.get(uid)!,
+            liveLocation: null,
+            distance: Infinity,
+            isNear: false,
+          }));
+
+        setMatchedUsers(initialMatches);
+
+        // Subscribe to live locations of matched users
+        if (liveLocationsUnsubscribeRef.current) {
+          liveLocationsUnsubscribeRef.current();
+        }
+
+        liveLocationsUnsubscribeRef.current = subscribeMultipleLiveLocations(
+          uids,
+          (uid, location) => {
+            setMatchedUsers((prev) => {
+              return prev.map((match) => {
+                if (match.uid === uid) {
+                  const distance =
+                    location && myLocation
+                      ? haversineDistance(myLocation, { lat: location.lat, lng: location.lng })
+                      : Infinity;
+
+                  return {
+                    ...match,
+                    liveLocation: location,
+                    distance,
+                    isNear: distance <= 2000, // Within 2km
+                  };
+                }
+                return match;
+              });
+            });
+          }
+        );
+
+        setIsLoadingMatches(false);
+      }
+    );
   };
 
   // ============ GO ONLINE ============
@@ -509,9 +615,13 @@ const MapPage: React.FC = () => {
       )}
 
       {/* Status Indicator */}
-      <div className={`status-indicator ${isOnline ? 'online' : 'offline'}`}>
-        {isOnline ? '🟢 Online - Sharing your location' : '🔴 Offline - Location hidden'}
-        {isOnline && destinationName && (
+      <div className={`status-indicator ${isOnline ? 'online' : destinationCoords ? 'searching' : 'offline'}`}>
+        {isOnline 
+          ? '🟢 Online - Sharing your location' 
+          : destinationCoords 
+            ? '🔵 Searching - Your location is hidden but you can see nearby riders'
+            : '🔴 Offline - Enter a destination to see nearby riders'}
+        {destinationName && (
           <span className="destination-display">📍 Going to: {destinationName}</span>
         )}
       </div>
@@ -525,26 +635,34 @@ const MapPage: React.FC = () => {
             isOnline={isOnline}
             matchedUsers={sortedMatches}
             onUserClick={handleChatClick}
+            destinationCoords={destinationCoords}
           />
         </div>
 
         {/* Side Panel - Match List */}
         <div className="side-panel">
-          {isOnline ? (
-            <MatchList
-              matches={sortedMatches}
-              onChatClick={handleChatClick}
-              isLoading={isLoadingMatches}
-            />
+          {destinationCoords ? (
+            <>
+              <MatchList
+                matches={sortedMatches}
+                onChatClick={handleChatClick}
+                isLoading={isLoadingMatches}
+              />
+              {!isOnline && sortedMatches.length > 0 && (
+                <div className="go-online-hint">
+                  💡 Go online to let others see you and start chatting!
+                </div>
+              )}
+            </>
           ) : (
             <div className="offline-message">
-              <span className="offline-icon">🔒</span>
-              <h3>You're Offline</h3>
-              <p>Go online to see other riders heading to the same destination.</p>
+              <span className="offline-icon">📍</span>
+              <h3>Enter Your Destination</h3>
+              <p>Search for a destination to see nearby riders heading the same way.</p>
               <ol>
                 <li>Enter your destination above</li>
-                <li>Click "Go Online"</li>
-                <li>See matched riders!</li>
+                <li>See riders within 2km radius</li>
+                <li>Go online to share your location</li>
               </ol>
             </div>
           )}
@@ -633,6 +751,11 @@ const MapPage: React.FC = () => {
           color: #2e7d32;
         }
 
+        .status-indicator.searching {
+          background: #e3f2fd;
+          color: #1565c0;
+        }
+
         .status-indicator.offline {
           background: #fafafa;
           color: #757575;
@@ -641,6 +764,16 @@ const MapPage: React.FC = () => {
         .destination-display {
           font-weight: normal;
           opacity: 0.8;
+        }
+
+        .go-online-hint {
+          margin-top: 12px;
+          padding: 12px 16px;
+          background: #fff3e0;
+          color: #e65100;
+          border-radius: 8px;
+          font-size: 13px;
+          text-align: center;
         }
 
         .main-content {

@@ -130,6 +130,7 @@ interface MapViewProps {
   isOnline: boolean;
   matchedUsers: MatchedUser[];
   onUserClick?: (uid: string) => void;
+  destinationCoords?: Coordinates | null;
 }
 
 const MapView: React.FC<MapViewProps> = ({
@@ -137,6 +138,7 @@ const MapView: React.FC<MapViewProps> = ({
   isOnline,
   matchedUsers,
   onUserClick,
+  destinationCoords,
 }) => {
   // Default center (will be updated when location is available)
   const defaultCenter: Coordinates = myLocation || { lat: 40.7128, lng: -74.006 };
@@ -167,14 +169,14 @@ const MapView: React.FC<MapViewProps> = ({
           </Marker>
         )}
         
-        {/* 2km radius circle (only when online) */}
-        {isOnline && myLocation && (
+        {/* 2km radius circle (shows when destination is selected) */}
+        {myLocation && destinationCoords && (
           <Circle
             center={[myLocation.lat, myLocation.lng]}
             radius={2000}
             pathOptions={{
-              color: '#4CAF50',
-              fillColor: '#4CAF50',
+              color: isOnline ? '#4CAF50' : '#2196F3',
+              fillColor: isOnline ? '#4CAF50' : '#2196F3',
               fillOpacity: 0.1,
               weight: 2,
               dashArray: '10, 5',
@@ -182,9 +184,8 @@ const MapView: React.FC<MapViewProps> = ({
           />
         )}
         
-        {/* Matched user markers (only when online) */}
-        {isOnline &&
-          matchedUsers.map((match) =>
+        {/* Matched user markers (shows nearby users) */}
+        {matchedUsers.map((match) =>
             match.liveLocation ? (
               <AnimatedMarker
                 key={match.uid}
