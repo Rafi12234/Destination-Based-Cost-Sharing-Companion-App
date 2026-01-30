@@ -16,6 +16,7 @@ import {
   deleteDestination,
   updateDestinationLocation,
   subscribeToDestinations,
+  getDestination,
 } from '@/firebase/firestore';
 import MapView from '@/components/MapView';
 import DestinationSearch from '@/components/DestinationSearch';
@@ -62,6 +63,25 @@ const MapPage: React.FC = () => {
         const profile = await getUserProfile(authUser.uid);
         if (profile) {
           setUserProfile(profile);
+          
+          // Check if user has an existing destination (was online before)
+          const existingDestination = await getDestination(authUser.uid);
+          if (existingDestination) {
+            // Restore destination state
+            setDestinationName(existingDestination.destinationName);
+            setDestinationCoords({
+              lat: existingDestination.destinationLat,
+              lng: existingDestination.destinationLng,
+            });
+            setIsOnline(true);
+            
+            // Start location watch and subscribe to matches
+            startLocationWatchForRestore();
+            subscribeToMatchingDestinationsForRestore(profile, {
+              lat: existingDestination.destinationLat,
+              lng: existingDestination.destinationLng,
+            });
+          }
         } else {
           // Profile not found - redirect to register
           console.error('User profile not found');
@@ -181,8 +201,10 @@ const MapPage: React.FC = () => {
         destinationsUnsubscribeRef.current = null;
       }
 
-      // 4. Clear state
+      // 4. Clear all state - destination, matches, and online status
       setMatchedUsers([]);
+      setDestinationName('');
+      setDestinationCoords(null);
       setIsOnline(false);
     } catch (error) {
       console.error('Error going offline:', error);
@@ -288,6 +310,132 @@ const MapPage: React.FC = () => {
 
           // Check if destinations match (within 500m)
           if (!destinationsMatch(destinationCoords, destTarget)) return false;
+
+          // Check if user is within 2km of my location
+          if (myLocation) {
+            const userLocation: Coordinates = {
+              lat: dest.currentLat,
+              lng: dest.currentLng,
+            };
+            const distance = haversineDistance(myLocation, userLocation);
+            return distance <= 2000; // Within 2km
+          }
+
+          return false;
+        });
+
+        if (matchingDestinations.length === 0) {
+          setMatchedUsers([]);
+          setIsLoadingMatches(false);
+          return;
+        }
+
+        // Fetch user profiles for matching destinations
+        const uids = matchingDestinations.map((d) => d.uid);
+        const profiles = await getUserProfiles(uids);
+
+        // Create matched users list
+        const matches: MatchedUser[] = matchingDestinations
+          .filter((dest) => profiles.has(dest.uid))
+          .map((dest) => {
+            const userLocation: Coordinates = {
+              lat: dest.currentLat,
+              lng: dest.currentLng,
+            };
+            const distance = myLocation
+              ? haversineDistance(myLocation, userLocation)
+              : Infinity;
+
+            return {
+              uid: dest.uid,
+              profile: profiles.get(dest.uid)!,
+              destination: dest,
+              distance,
+              isNear: distance <= 2000,
+            };
+          })
+          .sort((a, b) => a.distance - b.distance);
+
+        setMatchedUsers(matches);
+        setIsLoadingMatches(false);
+      }
+    );
+  };
+
+  // ============ RESTORE FUNCTIONS (for returning to page) ============
+  const startLocationWatchForRestore = () => {
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+    }
+
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      async (position) => {
+        const newLocation: Coordinates = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        };
+
+        setMyLocation(newLocation);
+
+        // Check if we should publish update (moved > 10m or 2+ seconds elapsed)
+        const now = Date.now();
+        const timeSinceLastUpdate = now - lastUpdateTimeRef.current;
+        const distanceMoved = lastLocationRef.current
+          ? haversineDistance(lastLocationRef.current, newLocation)
+          : Infinity;
+
+        if (distanceMoved > 10 || timeSinceLastUpdate > 2000) {
+          // Update location in Firestore Destination document
+          if (user) {
+            try {
+              await updateDestinationLocation(user.uid, newLocation.lat, newLocation.lng);
+            } catch (error) {
+              console.error('Error updating location:', error);
+            }
+          }
+
+          lastLocationRef.current = newLocation;
+          lastUpdateTimeRef.current = now;
+        }
+      },
+      (error) => {
+        console.error('Watch position error:', error);
+        setLocationError(getGeolocationErrorMessage(error));
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 1000,
+        timeout: 10000,
+      }
+    );
+  };
+
+  const subscribeToMatchingDestinationsForRestore = (profile: UserProfile, destCoords: Coordinates) => {
+    // Unsubscribe from previous listener
+    if (destinationsUnsubscribeRef.current) {
+      destinationsUnsubscribeRef.current();
+    }
+
+    setIsLoadingMatches(true);
+
+    // Subscribe to all destinations with same gender
+    destinationsUnsubscribeRef.current = subscribeToDestinations(
+      profile.gender,
+      async (destinations) => {
+        // Filter destinations:
+        // 1. Not my own destination
+        // 2. Destination matches (within 500m)
+        // 3. User is within 2km of me
+        const matchingDestinations = destinations.filter((dest) => {
+          if (dest.uid === user?.uid) return false;
+
+          const destTarget: Coordinates = {
+            lat: dest.destinationLat,
+            lng: dest.destinationLng,
+          };
+
+          // Check if destinations match (within 500m)
+          if (!destinationsMatch(destCoords, destTarget)) return false;
 
           // Check if user is within 2km of my location
           if (myLocation) {
