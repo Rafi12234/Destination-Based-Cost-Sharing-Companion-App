@@ -56,6 +56,13 @@ const MapPage: React.FC = () => {
   const destinationsUnsubscribeRef = useRef<(() => void) | null>(null);
   const lastLocationRef = useRef<Coordinates | null>(null);
   const lastUpdateTimeRef = useRef<number>(0);
+  const myLocationRef = useRef<Coordinates | null>(null);
+
+  // State for pending restoration (when destination exists but location not ready yet)
+  const [pendingRestore, setPendingRestore] = useState<{
+    profile: UserProfile;
+    destCoords: Coordinates;
+  } | null>(null);
 
   // ============ AUTH EFFECT ============
   useEffect(() => {
@@ -78,11 +85,16 @@ const MapPage: React.FC = () => {
             });
             setIsOnline(true);
             
-            // Start location watch and subscribe to matches
+            // Start location watch
             startLocationWatchForRestore();
-            subscribeToMatchingDestinationsForRestore(profile, {
-              lat: existingDestination.destinationLat,
-              lng: existingDestination.destinationLng,
+            
+            // Store pending restore - will subscribe when location is available
+            setPendingRestore({
+              profile,
+              destCoords: {
+                lat: existingDestination.destinationLat,
+                lng: existingDestination.destinationLng,
+              },
             });
           }
         } else {
@@ -111,6 +123,7 @@ const MapPage: React.FC = () => {
           };
           setMyLocation(coords);
           lastLocationRef.current = coords;
+          myLocationRef.current = coords;
         },
         (error) => {
           console.error('Geolocation error:', error);
@@ -122,6 +135,15 @@ const MapPage: React.FC = () => {
       setLocationError('Geolocation is not supported by your browser.');
     }
   }, []);
+
+  // ============ RESTORE MATCHES WHEN LOCATION IS READY ============
+  useEffect(() => {
+    // If we have a pending restore and location is now available, subscribe to matches
+    if (pendingRestore && myLocation) {
+      subscribeToMatchingDestinationsForRestore(pendingRestore.profile, pendingRestore.destCoords);
+      setPendingRestore(null); // Clear pending restore after subscribing
+    }
+  }, [pendingRestore, myLocation]);
 
   // ============ CLEANUP ON UNMOUNT ============
   useEffect(() => {
@@ -249,6 +271,7 @@ const MapPage: React.FC = () => {
         };
 
         setMyLocation(newLocation);
+        myLocationRef.current = newLocation;
 
         // Check if we should publish update (moved > 10m or 2+ seconds elapsed)
         const now = Date.now();
@@ -379,6 +402,7 @@ const MapPage: React.FC = () => {
         };
 
         setMyLocation(newLocation);
+        myLocationRef.current = newLocation;
 
         // Check if we should publish update (moved > 10m or 2+ seconds elapsed)
         const now = Date.now();
@@ -425,6 +449,9 @@ const MapPage: React.FC = () => {
     destinationsUnsubscribeRef.current = subscribeToDestinations(
       profile.gender,
       async (destinations) => {
+        // Use ref to get current location (avoids stale closure)
+        const currentLocation = myLocationRef.current;
+        
         // Filter destinations:
         // 1. Not my own destination
         // 2. Destination matches (within 500m)
@@ -441,12 +468,12 @@ const MapPage: React.FC = () => {
           if (!destinationsMatch(destCoords, destTarget)) return false;
 
           // Check if user is within 2km of my location
-          if (myLocation) {
+          if (currentLocation) {
             const userLocation: Coordinates = {
               lat: dest.currentLat,
               lng: dest.currentLng,
             };
-            const distance = haversineDistance(myLocation, userLocation);
+            const distance = haversineDistance(currentLocation, userLocation);
             return distance <= 2000; // Within 2km
           }
 
@@ -471,8 +498,8 @@ const MapPage: React.FC = () => {
               lat: dest.currentLat,
               lng: dest.currentLng,
             };
-            const distance = myLocation
-              ? haversineDistance(myLocation, userLocation)
+            const distance = currentLocation
+              ? haversineDistance(currentLocation, userLocation)
               : Infinity;
 
             return {
