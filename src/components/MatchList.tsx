@@ -23,7 +23,7 @@ const MatchList: React.FC<MatchListProps> = ({
     return (
       <div className="match-list">
         <div className="match-list-loading">
-          <span className="spinner">🔄</span>
+          <span className="spinner"></span>
           <p>Finding matches...</p>
         </div>
         <style>{styles}</style>
@@ -35,7 +35,7 @@ const MatchList: React.FC<MatchListProps> = ({
     return (
       <div className="match-list">
         <div className="match-list-empty">
-          <span className="empty-icon">🔍</span>
+          <div className="empty-icon">🔍</div>
           <p>No matches found yet</p>
           <small>Users going to the same destination will appear here</small>
         </div>
@@ -85,9 +85,7 @@ const MatchList: React.FC<MatchListProps> = ({
 
 const styles = `
   .match-list {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: transparent;
     overflow: hidden;
     height: 100%;
     display: flex;
@@ -95,22 +93,13 @@ const styles = `
   }
 
   .match-list-header {
-    padding: 16px;
-    border-bottom: 1px solid #e0e0e0;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-  }
-
-  .match-list-header h3 {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 600;
+    display: none;
   }
 
   .match-list-content {
     flex: 1;
     overflow-y: auto;
-    padding: 8px;
+    padding: 12px;
   }
 
   .match-list-loading,
@@ -119,14 +108,19 @@ const styles = `
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 40px 20px;
+    padding: 48px 24px;
     text-align: center;
-    color: #666;
+    color: #64748b;
   }
 
   .match-list-loading .spinner {
-    font-size: 32px;
-    animation: spin 2s linear infinite;
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e2e8f0;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 16px;
   }
 
   @keyframes spin {
@@ -135,44 +129,74 @@ const styles = `
   }
 
   .empty-icon {
-    font-size: 48px;
-    margin-bottom: 12px;
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    font-size: 28px;
   }
 
   .match-list-empty p {
     margin: 0 0 8px;
     font-size: 16px;
-    font-weight: 500;
+    font-weight: 600;
+    color: #334155;
   }
 
   .match-list-empty small {
-    color: #999;
-    font-size: 12px;
+    color: #94a3b8;
+    font-size: 13px;
   }
 
   .match-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px;
-    margin: 4px 0;
-    border-radius: 8px;
-    background: #f8f9fa;
-    transition: all 0.2s;
+    padding: 16px;
+    margin: 8px 0;
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+    animation: fadeInUp 0.3s ease forwards;
+    opacity: 0;
   }
 
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .match-item:nth-child(1) { animation-delay: 0.05s; }
+  .match-item:nth-child(2) { animation-delay: 0.1s; }
+  .match-item:nth-child(3) { animation-delay: 0.15s; }
+  .match-item:nth-child(4) { animation-delay: 0.2s; }
+  .match-item:nth-child(5) { animation-delay: 0.25s; }
+
   .match-item:hover {
-    background: #e9ecef;
+    background: white;
+    border-color: #93c5fd;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+    transform: translateY(-2px);
   }
 
   .match-item.near {
-    background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
-    border-left: 3px solid #4CAF50;
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border: 1px solid #86efac;
+  }
+
+  .match-item.near:hover {
+    border-color: #4ade80;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.15);
   }
 
   .match-item.far {
-    background: #f5f5f5;
-    border-left: 3px solid #9e9e9e;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
   }
 
   .match-info {
@@ -182,54 +206,67 @@ const styles = `
 
   .match-name {
     font-weight: 600;
-    font-size: 14px;
-    color: #333;
+    font-size: 15px;
+    color: #0f172a;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+    margin-bottom: 8px;
   }
 
   .near-badge {
     font-size: 10px;
-    background: #4CAF50;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
     color: white;
-    padding: 2px 6px;
-    border-radius: 10px;
-    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
   .match-details {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    margin-top: 4px;
+    gap: 4px;
   }
 
-  .distance, .destination {
-    font-size: 12px;
-    color: #666;
+  .distance, .destination, .phone {
+    font-size: 13px;
+    color: #64748b;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .distance {
+    color: #1d4ed8;
+    font-weight: 500;
   }
 
   .chat-button {
-    padding: 8px 16px;
-    background: linear-gradient(135deg, #2196F3, #1976D2);
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
     color: white;
     border: none;
-    border-radius: 6px;
+    border-radius: 10px;
     font-size: 13px;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s ease;
     white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
 
   .chat-button:hover {
-    background: linear-gradient(135deg, #1976D2, #1565C0);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.4);
+    background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.35);
   }
 `;
 

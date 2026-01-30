@@ -408,261 +408,1018 @@ const MapPage: React.FC = () => {
 
   return (
     <div className="map-page">
-      {/* Top Bar */}
-      <header className="top-bar">
-        <div className="top-bar-left">
-          <h1>🚗 RideSplit Match</h1>
+      {/* Header */}
+      <header className="header">
+        <div className="header-left">
+          <div className="logo" title="RideSplit">
+            <div className="logo-icon">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L4 7V17L12 22L20 17V7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
+              </svg>
+            </div>
+            <span className="logo-text">RideSplit</span>
+          </div>
+        </div>
+        
+        <div className="header-center">
           {userProfile && (
-            <span className="user-info">
-              👤 {userProfile.name} ({userProfile.gender})
-            </span>
+            <div className="user-badge">
+              <div className="user-avatar">
+                {userProfile.name.charAt(0).toUpperCase()}
+              </div>
+              <div className="user-details">
+                <span className="user-name">{userProfile.name}</span>
+                <span className="user-gender">{userProfile.gender}</span>
+              </div>
+              <div className="online-indicator-wrapper">
+                <span className={`online-dot ${isOnline ? 'active' : ''}`}></span>
+                <span className="online-text">{isOnline ? 'Online' : 'Offline'}</span>
+              </div>
+            </div>
           )}
         </div>
-        <div className="top-bar-right">
+
+        <div className="header-right">
           <button onClick={handleSignOut} className="sign-out-btn">
-            🚪 Sign Out
+            <span>Sign Out</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
           </button>
         </div>
+        
+        <div className="header-glow"></div>
       </header>
 
-      {/* Controls Bar */}
-      <div className="controls-bar">
-        <DestinationSearch
-          onDestinationSelect={handleDestinationSelect}
-          disabled={isOnline}
-          selectedDestination={destinationName}
-        />
-        <OnlineToggle
-          isOnline={isOnline}
-          onToggle={handleToggleOnline}
-          disabled={!myLocation || (!isOnline && !destinationCoords)}
-          isLoading={isTogglingOnline}
-        />
+      {/* Controls Section */}
+      <div className="controls-section">
+        <div className="controls-wrapper">
+          <div className="search-wrapper">
+            <div className="search-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+              <span>Destination</span>
+            </div>
+            <DestinationSearch
+              onDestinationSelect={handleDestinationSelect}
+              disabled={isOnline}
+              selectedDestination={destinationName}
+            />
+          </div>
+          
+          <div className="toggle-wrapper">
+            <OnlineToggle
+              isOnline={isOnline}
+              onToggle={handleToggleOnline}
+              disabled={!myLocation || (!isOnline && !destinationCoords)}
+              isLoading={isTogglingOnline}
+            />
+          </div>
+        </div>
+
+        {/* Status Bar */}
+        <div className={`status-bar ${isOnline ? 'online' : 'offline'}`}>
+          <div className="status-indicator">
+            <span className={`status-dot ${isOnline ? 'pulse' : ''}`}></span>
+            <span className="status-text">
+              {isOnline 
+                ? 'Online - Finding matches nearby' 
+                : 'Offline - Go online to find riders'}
+            </span>
+          </div>
+          {destinationName && (
+            <div className="destination-tag">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 16v-4M12 8h.01"/>
+              </svg>
+              <span>{destinationName}</span>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Error Messages */}
+      {/* Error Alert */}
       {locationError && (
-        <div className="error-banner">
-          ⚠️ {locationError}
+        <div className="error-alert">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          <span>{locationError}</span>
         </div>
       )}
 
-      {/* Status Indicator */}
-      <div className={`status-indicator ${isOnline ? 'online' : 'offline'}`}>
-        {isOnline 
-          ? '🟢 Online - Sharing your location & finding matches' 
-          : '🔴 Offline - Go online to find nearby riders'}
-        {destinationName && (
-          <span className="destination-display">📍 Going to: {destinationName}</span>
-        )}
-      </div>
-
-      {/* Main Content */}
+      {/* Main Content Area */}
       <div className="main-content">
-        {/* Map */}
-        <div className="map-container">
+        {/* Map Container */}
+        <div className="map-wrapper">
           <MapView
             myLocation={myLocation}
             isOnline={isOnline}
             matchedUsers={sortedMatches}
             onUserClick={handleChatClick}
           />
+          
+          {/* Map Overlay Info */}
+          <div className="map-overlay">
+            <div className="map-info-card">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <span>2km radius</span>
+            </div>
+          </div>
         </div>
 
-        {/* Side Panel - Match List */}
+        {/* Side Panel */}
         <div className="side-panel">
           {isOnline ? (
-            <MatchList
-              matches={sortedMatches}
-              onChatClick={handleChatClick}
-              isLoading={isLoadingMatches}
-            />
+            <div className="matches-container">
+              <div className="matches-header">
+                <div className="matches-title">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+                  </svg>
+                  <h3>Matched Riders</h3>
+                </div>
+                <div className="matches-count">{sortedMatches.length}</div>
+              </div>
+              <MatchList
+                matches={sortedMatches}
+                onChatClick={handleChatClick}
+                isLoading={isLoadingMatches}
+              />
+            </div>
           ) : (
-            <div className="offline-message">
-              <span className="offline-icon">📍</span>
-              <h3>{destinationCoords ? 'Ready to Go!' : 'Enter Your Destination'}</h3>
-              <p>{destinationCoords 
-                ? 'Click "Go Online" to share your location and find matches.' 
-                : 'Search for a destination to get started.'}</p>
-              <ol>
-                <li>Enter your destination above</li>
-                <li>Click "Go Online"</li>
-                <li>See matched riders within 2km!</li>
-              </ol>
+            <div className="getting-started">
+              <div className="getting-started-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                </svg>
+              </div>
+              <h3>{destinationCoords ? 'Ready to Connect!' : 'Get Started'}</h3>
+              <p>
+                {destinationCoords 
+                  ? 'Go online to find riders heading to the same destination.' 
+                  : 'Enter your destination to begin finding travel companions.'}
+              </p>
+              
+              <div className="steps">
+                <div className={`step ${destinationCoords ? 'completed' : 'active'}`}>
+                  <div className="step-number">1</div>
+                  <div className="step-content">
+                    <span className="step-title">Enter destination</span>
+                    <span className="step-desc">Search for where you're going</span>
+                  </div>
+                </div>
+                <div className={`step ${isOnline ? 'completed' : destinationCoords ? 'active' : ''}`}>
+                  <div className="step-number">2</div>
+                  <div className="step-content">
+                    <span className="step-title">Go online</span>
+                    <span className="step-desc">Share your location</span>
+                  </div>
+                </div>
+                <div className="step">
+                  <div className="step-number">3</div>
+                  <div className="step-content">
+                    <span className="step-title">Find matches</span>
+                    <span className="step-desc">Connect within 2km radius</span>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
       </div>
 
       <style>{`
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+
         .map-page {
           display: flex;
           flex-direction: column;
           height: 100vh;
-          background: #f5f5f5;
+          background: #f1f5f9;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
         }
 
-        .top-bar {
+        /* ========== HEADER ========== */
+        .header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 12px 20px;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+          padding: 16px 32px;
+          background: linear-gradient(135deg, #0a1628 0%, #1a365d 100%);
+          box-shadow: 0 4px 24px rgba(10, 22, 40, 0.4);
+          position: relative;
+          z-index: 100;
+          overflow: hidden;
         }
 
-        .top-bar-left {
+        .header::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.4), transparent);
+        }
+
+        .header::after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.3), transparent);
+        }
+
+        .header-glow {
+          position: absolute;
+          top: -50%;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 600px;
+          height: 200px;
+          background: radial-gradient(ellipse, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+          pointer-events: none;
+          animation: glowPulse 4s ease-in-out infinite;
+        }
+
+        @keyframes glowPulse {
+          0%, 100% { opacity: 0.5; transform: translateX(-50%) scale(1); }
+          50% { opacity: 1; transform: translateX(-50%) scale(1.1); }
+        }
+
+        .header-left,
+        .header-center,
+        .header-right {
+          display: flex;
+          align-items: center;
+          position: relative;
+          z-index: 1;
+        }
+
+        .header-left {
+          flex: 1;
+        }
+
+        .header-center {
+          flex: 2;
+          justify-content: center;
+        }
+
+        .header-right {
+          flex: 1;
+          justify-content: flex-end;
+        }
+
+        .logo {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          cursor: pointer;
+          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .logo:hover {
+          transform: translateX(4px);
+        }
+
+        .logo:hover .logo-icon {
+          transform: rotate(10deg) scale(1.05);
+          box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+        }
+
+        .logo-icon {
+          width: 44px;
+          height: 44px;
+          background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          position: relative;
+          overflow: hidden;
+        }
+
+        .logo-icon::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+          transition: left 0.5s ease;
+        }
+
+        .logo:hover .logo-icon::before {
+          left: 100%;
+        }
+
+        .logo-icon svg {
+          width: 24px;
+          height: 24px;
+          position: relative;
+          z-index: 1;
+        }
+
+        .logo-text {
+          font-size: 22px;
+          font-weight: 700;
+          color: white;
+          letter-spacing: -0.5px;
+          background: linear-gradient(135deg, #ffffff 0%, #93c5fd 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        .user-badge {
           display: flex;
           align-items: center;
           gap: 16px;
+          padding: 10px 20px 10px 10px;
+          background: rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 60px;
+          backdrop-filter: blur(10px);
+          transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+          cursor: default;
+          position: relative;
+          overflow: hidden;
         }
 
-        .top-bar-left h1 {
-          margin: 0;
-          font-size: 20px;
+        .user-badge::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
+          opacity: 0;
+          transition: opacity 0.3s ease;
         }
 
-        .user-info {
-          font-size: 14px;
-          opacity: 0.9;
-          background: rgba(255, 255, 255, 0.2);
-          padding: 4px 12px;
+        .user-badge:hover::before {
+          opacity: 1;
+        }
+
+        .user-badge:hover {
+          background: rgba(255, 255, 255, 0.12);
+          border-color: rgba(59, 130, 246, 0.3);
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .user-avatar {
+          width: 42px;
+          height: 42px;
+          background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-weight: 700;
+          font-size: 16px;
+          position: relative;
+          z-index: 1;
+          transition: all 0.3s ease;
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .user-badge:hover .user-avatar {
+          transform: scale(1.08);
+          box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+        }
+
+        .user-details {
+          display: flex;
+          flex-direction: column;
+          position: relative;
+          z-index: 1;
+        }
+
+        .user-name {
+          font-size: 15px;
+          font-weight: 600;
+          color: white;
+          line-height: 1.2;
+        }
+
+        .user-gender {
+          font-size: 12px;
+          color: rgba(255, 255, 255, 0.6);
+          text-transform: capitalize;
+        }
+
+        .online-indicator-wrapper {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 6px 14px;
+          background: rgba(0, 0, 0, 0.2);
           border-radius: 20px;
+          margin-left: 8px;
+          position: relative;
+          z-index: 1;
+        }
+
+        .online-dot {
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          background: #64748b;
+          transition: all 0.3s ease;
+        }
+
+        .online-dot.active {
+          background: #22c55e;
+          box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.3);
+          animation: onlinePulse 2s ease-in-out infinite;
+        }
+
+        @keyframes onlinePulse {
+          0%, 100% { box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.3); }
+          50% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.15); }
+        }
+
+        .online-text {
+          font-size: 12px;
+          font-weight: 600;
+          color: rgba(255, 255, 255, 0.7);
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
         }
 
         .sign-out-btn {
-          padding: 8px 16px;
-          background: rgba(255, 255, 255, 0.2);
-          color: white;
-          border: 1px solid rgba(255, 255, 255, 0.3);
-          border-radius: 8px;
-          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 12px 20px;
+          background: transparent;
+          border: 1px solid rgba(239, 68, 68, 0.3);
+          border-radius: 12px;
+          color: #fca5a5;
           font-size: 14px;
-          transition: all 0.2s;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          position: relative;
+          overflow: hidden;
+        }
+
+        .sign-out-btn::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.1));
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+
+        .sign-out-btn:hover::before {
+          opacity: 1;
+        }
+
+        .sign-out-btn span,
+        .sign-out-btn svg {
+          position: relative;
+          z-index: 1;
+        }
+
+        .sign-out-btn svg {
+          width: 18px;
+          height: 18px;
+          transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .sign-out-btn:hover {
-          background: rgba(255, 255, 255, 0.3);
+          border-color: rgba(239, 68, 68, 0.5);
+          color: #fecaca;
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(239, 68, 68, 0.15);
         }
 
-        .controls-bar {
-          display: flex;
-          gap: 16px;
-          padding: 16px 20px;
+        .sign-out-btn:hover svg {
+          transform: translateX(4px);
+        }
+
+        .sign-out-btn:active {
+          transform: translateY(0);
+        }
+
+        /* ========== CONTROLS SECTION ========== */
+        .controls-section {
           background: white;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+          position: relative;
+          z-index: 50;
         }
 
-        .error-banner {
-          padding: 12px 20px;
-          background: #ffebee;
-          color: #c62828;
-          font-size: 14px;
-          text-align: center;
+        .controls-wrapper {
+          display: flex;
+          align-items: flex-end;
+          gap: 20px;
+          padding: 20px 24px;
+        }
+
+        .search-wrapper {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .search-label {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 13px;
+          font-weight: 600;
+          color: #475569;
+        }
+
+        .search-label svg {
+          width: 16px;
+          height: 16px;
+          color: #3b82f6;
+        }
+
+        .toggle-wrapper {
+          flex-shrink: 0;
+        }
+
+        .status-bar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 12px 24px;
+          border-top: 1px solid #e2e8f0;
+          transition: all 0.3s ease;
+        }
+
+        .status-bar.online {
+          background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+        }
+
+        .status-bar.offline {
+          background: #f8fafc;
         }
 
         .status-indicator {
           display: flex;
           align-items: center;
-          gap: 16px;
-          padding: 10px 20px;
-          font-size: 14px;
-          font-weight: 500;
+          gap: 10px;
         }
 
-        .status-indicator.online {
-          background: #e8f5e9;
-          color: #2e7d32;
+        .status-dot {
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          background: #94a3b8;
+          transition: all 0.3s ease;
         }
 
-        .status-indicator.offline {
-          background: #fafafa;
-          color: #757575;
+        .status-bar.online .status-dot {
+          background: #22c55e;
+          box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
         }
 
-        .destination-display {
-          font-weight: normal;
-          opacity: 0.8;
+        .status-dot.pulse {
+          animation: pulse-dot 2s ease-in-out infinite;
         }
 
-        .main-content {
+        @keyframes pulse-dot {
+          0%, 100% { box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2); }
+          50% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.1); }
+        }
+
+        .status-text {
           font-size: 13px;
-          text-align: center;
+          font-weight: 500;
+          color: #64748b;
         }
 
+        .status-bar.online .status-text {
+          color: #16a34a;
+        }
+
+        .destination-tag {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 14px;
+          background: white;
+          border: 1px solid #e2e8f0;
+          border-radius: 20px;
+          font-size: 13px;
+          color: #475569;
+          animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+          from { opacity: 0; transform: translateX(10px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+
+        .destination-tag svg {
+          width: 14px;
+          height: 14px;
+          color: #3b82f6;
+        }
+
+        /* ========== ERROR ALERT ========== */
+        .error-alert {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 14px 24px;
+          background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+          border-bottom: 1px solid #fecaca;
+          animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .error-alert svg {
+          width: 20px;
+          height: 20px;
+          color: #dc2626;
+          flex-shrink: 0;
+        }
+
+        .error-alert span {
+          font-size: 14px;
+          color: #b91c1c;
+        }
+
+        /* ========== MAIN CONTENT ========== */
         .main-content {
           display: flex;
           flex: 1;
-          gap: 16px;
-          padding: 16px 20px;
+          gap: 20px;
+          padding: 20px 24px;
           overflow: hidden;
         }
 
-        .map-container {
+        .map-wrapper {
           flex: 2;
           min-width: 0;
+          position: relative;
+          border-radius: 16px;
+          overflow: hidden;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
         }
 
+        .map-overlay {
+          position: absolute;
+          top: 16px;
+          right: 16px;
+          z-index: 1000;
+        }
+
+        .map-info-card {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 16px;
+          background: rgba(255, 255, 255, 0.95);
+          backdrop-filter: blur(10px);
+          border-radius: 10px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+          font-size: 13px;
+          font-weight: 500;
+          color: #1e40af;
+        }
+
+        .map-info-card svg {
+          width: 16px;
+          height: 16px;
+          color: #3b82f6;
+        }
+
+        /* ========== SIDE PANEL ========== */
         .side-panel {
           flex: 1;
-          min-width: 280px;
-          max-width: 350px;
+          min-width: 320px;
+          max-width: 400px;
+          display: flex;
+          flex-direction: column;
         }
 
-        .offline-message {
+        .matches-container {
           background: white;
-          border-radius: 12px;
-          padding: 32px 24px;
+          border-radius: 16px;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+          animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .matches-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 18px 20px;
+          background: linear-gradient(135deg, #0a1628 0%, #1a365d 100%);
+        }
+
+        .matches-title {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          color: white;
+        }
+
+        .matches-title svg {
+          width: 20px;
+          height: 20px;
+          color: #60a5fa;
+        }
+
+        .matches-title h3 {
+          font-size: 16px;
+          font-weight: 600;
+        }
+
+        .matches-count {
+          width: 28px;
+          height: 28px;
+          background: rgba(59, 130, 246, 0.3);
+          border: 1px solid rgba(59, 130, 246, 0.5);
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 14px;
+          font-weight: 600;
+          color: #93c5fd;
+        }
+
+        /* ========== GETTING STARTED ========== */
+        .getting-started {
+          background: white;
+          border-radius: 16px;
+          padding: 40px 28px;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
           text-align: center;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          animation: fadeIn 0.4s ease;
         }
 
-        .offline-icon {
-          font-size: 48px;
+        .getting-started-icon {
+          width: 72px;
+          height: 72px;
+          background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 0 auto 24px;
         }
 
-        .offline-message h3 {
-          margin: 16px 0 8px;
-          color: #333;
+        .getting-started-icon svg {
+          width: 32px;
+          height: 32px;
+          color: #1d4ed8;
         }
 
-        .offline-message p {
-          color: #666;
-          margin: 0 0 20px;
+        .getting-started h3 {
+          font-size: 20px;
+          font-weight: 700;
+          color: #0f172a;
+          margin-bottom: 8px;
+        }
+
+        .getting-started p {
           font-size: 14px;
+          color: #64748b;
+          margin-bottom: 32px;
+          line-height: 1.6;
         }
 
-        .offline-message ol {
+        .steps {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
           text-align: left;
-          color: #555;
+        }
+
+        .step {
+          display: flex;
+          align-items: flex-start;
+          gap: 16px;
+          padding: 16px;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          transition: all 0.3s ease;
+        }
+
+        .step.active {
+          background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+          border-color: #93c5fd;
+        }
+
+        .step.completed {
+          background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+          border-color: #86efac;
+        }
+
+        .step-number {
+          width: 28px;
+          height: 28px;
+          background: #e2e8f0;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 13px;
+          font-weight: 700;
+          color: #64748b;
+          flex-shrink: 0;
+          transition: all 0.3s ease;
+        }
+
+        .step.active .step-number {
+          background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+          color: white;
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .step.completed .step-number {
+          background: linear-gradient(135deg, #22c55e, #16a34a);
+          color: white;
+          box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+        }
+
+        .step-content {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+
+        .step-title {
           font-size: 14px;
-          margin: 0;
-          padding-left: 24px;
+          font-weight: 600;
+          color: #1e293b;
         }
 
-        .offline-message li {
-          margin: 8px 0;
+        .step-desc {
+          font-size: 12px;
+          color: #64748b;
         }
 
-        @media (max-width: 768px) {
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 1024px) {
           .main-content {
             flex-direction: column;
           }
 
           .side-panel {
             max-width: none;
-            max-height: 200px;
+            max-height: 280px;
           }
 
-          .controls-bar {
-            flex-direction: column;
+          .map-wrapper {
+            flex: none;
+            height: 50vh;
+          }
+        }
+
+        @media (max-width: 900px) {
+          .header {
+            padding: 12px 20px;
           }
 
-          .top-bar-left {
+          .header-left {
+            flex: 0;
+          }
+
+          .header-center {
+            flex: 1;
+          }
+
+          .logo-text {
+            display: none;
+          }
+
+          .user-badge {
+            padding: 8px 16px 8px 8px;
+            gap: 12px;
+          }
+
+          .user-avatar {
+            width: 36px;
+            height: 36px;
+            font-size: 14px;
+          }
+
+          .user-name {
+            font-size: 14px;
+          }
+
+          .online-indicator-wrapper {
+            padding: 5px 10px;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .header {
+            padding: 10px 16px;
+          }
+
+          .user-details {
+            display: none;
+          }
+
+          .online-indicator-wrapper {
+            margin-left: 0;
+          }
+
+          .controls-wrapper {
             flex-direction: column;
-            align-items: flex-start;
-            gap: 8px;
+            gap: 12px;
+            padding: 16px;
+          }
+
+          .toggle-wrapper {
+            width: 100%;
+          }
+
+          .main-content {
+            padding: 12px;
+          }
+
+          .side-panel {
+            min-width: 0;
+          }
+
+          .getting-started {
+            padding: 24px 20px;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .logo-icon {
+            width: 38px;
+            height: 38px;
+          }
+
+          .logo-icon svg {
+            width: 20px;
+            height: 20px;
+          }
+
+          .user-badge {
+            padding: 6px 12px 6px 6px;
+          }
+
+          .user-avatar {
+            width: 32px;
+            height: 32px;
+            font-size: 13px;
+          }
+
+          .online-text {
+            display: none;
+          }
+
+          .sign-out-btn {
+            padding: 10px;
+          }
+
+          .sign-out-btn span {
+            display: none;
           }
         }
       `}</style>

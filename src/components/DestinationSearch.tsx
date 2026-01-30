@@ -127,7 +127,7 @@ const DestinationSearch: React.FC<DestinationSearchProps> = ({
           disabled={disabled}
           className="search-input"
         />
-        {isLoading && <span className="search-loading">🔍</span>}
+        {isLoading && <span className="search-loading"></span>}
       </div>
 
       {error && <div className="search-error">{error}</div>}
@@ -160,27 +160,41 @@ const DestinationSearch: React.FC<DestinationSearchProps> = ({
 
         .search-input {
           width: 100%;
-          padding: 12px 16px;
-          font-size: 14px;
-          border: 2px solid #e0e0e0;
-          border-radius: 8px;
+          padding: 14px 48px 14px 18px;
+          font-size: 15px;
+          color: #1e293b;
+          background: white;
+          border: 2px solid #e2e8f0;
+          border-radius: 12px;
           outline: none;
-          transition: border-color 0.2s;
+          transition: all 0.3s ease;
+        }
+
+        .search-input::placeholder {
+          color: #94a3b8;
         }
 
         .search-input:focus {
-          border-color: #4CAF50;
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
         }
 
         .search-input:disabled {
-          background-color: #f5f5f5;
+          background-color: #f1f5f9;
+          border-color: #e2e8f0;
+          color: #94a3b8;
           cursor: not-allowed;
         }
 
         .search-loading {
           position: absolute;
-          right: 12px;
-          animation: spin 1s linear infinite;
+          right: 16px;
+          width: 20px;
+          height: 20px;
+          border: 2px solid #e2e8f0;
+          border-top-color: #3b82f6;
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
         }
 
         @keyframes spin {
@@ -189,42 +203,49 @@ const DestinationSearch: React.FC<DestinationSearchProps> = ({
         }
 
         .search-error {
-          color: #f44336;
+          color: #dc2626;
           font-size: 12px;
-          margin-top: 4px;
+          margin-top: 6px;
+          padding-left: 4px;
         }
 
         .search-results {
           position: absolute;
-          top: 100%;
+          top: calc(100% + 8px);
           left: 0;
           right: 0;
           background: white;
-          border: 1px solid #e0e0e0;
-          border-radius: 8px;
-          margin-top: 4px;
-          max-height: 200px;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          max-height: 240px;
           overflow-y: auto;
           z-index: 1000;
           list-style: none;
-          padding: 0;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          padding: 8px;
+          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+          animation: dropdownFade 0.2s ease;
+        }
+
+        @keyframes dropdownFade {
+          from { opacity: 0; transform: translateY(-8px); }
+          to { opacity: 1; transform: translateY(0); }
         }
 
         .search-result-item {
-          padding: 12px 16px;
+          padding: 14px 16px;
           cursor: pointer;
-          font-size: 13px;
-          border-bottom: 1px solid #f0f0f0;
-          transition: background-color 0.2s;
-        }
-
-        .search-result-item:last-child {
-          border-bottom: none;
+          font-size: 14px;
+          color: #334155;
+          border-radius: 8px;
+          transition: all 0.2s ease;
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
         }
 
         .search-result-item:hover {
-          background-color: #f5f5f5;
+          background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+          color: #1d4ed8;
         }
       `}</style>
     </div>
