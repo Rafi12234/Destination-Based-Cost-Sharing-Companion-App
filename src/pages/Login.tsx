@@ -228,7 +228,8 @@ const Login: React.FC = () => {
           padding: 48px;
           display: flex;
           flex-direction: column;
-          justify-content: space-between;
+          justify-content: center;
+          align-items: center;
           position: relative;
           overflow: hidden;
         }
@@ -258,11 +259,14 @@ const Login: React.FC = () => {
         .brand-content {
           position: relative;
           z-index: 1;
+          text-align: center;
+          max-width: 420px;
         }
 
         .logo {
           display: flex;
           align-items: center;
+          justify-content: center;
           gap: 12px;
           margin-bottom: 48px;
         }
@@ -303,7 +307,6 @@ const Login: React.FC = () => {
           font-size: 16px;
           color: rgba(255, 255, 255, 0.7);
           line-height: 1.6;
-          max-width: 400px;
           margin-bottom: 48px;
         }
 
@@ -311,6 +314,7 @@ const Login: React.FC = () => {
           display: flex;
           flex-direction: column;
           gap: 24px;
+          text-align: left;
         }
 
         .feature {
@@ -350,7 +354,11 @@ const Login: React.FC = () => {
         }
 
         .brand-footer {
-          position: relative;
+          position: absolute;
+          bottom: 48px;
+          left: 0;
+          right: 0;
+          text-align: center;
           z-index: 1;
         }
 

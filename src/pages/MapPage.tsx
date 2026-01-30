@@ -613,8 +613,29 @@ const MapPage: React.FC = () => {
           display: flex;
           flex-direction: column;
           height: 100vh;
-          background: #f1f5f9;
+          background: linear-gradient(180deg, #0d1b2a 0%, #1b263b 50%, #0d1b2a 100%);
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .map-page::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: 
+            radial-gradient(ellipse at 20% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+            radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.06) 0%, transparent 50%);
+          pointer-events: none;
+          animation: ambientShift 10s ease-in-out infinite;
+        }
+
+        @keyframes ambientShift {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.6; }
         }
 
         /* ========== HEADER ========== */
@@ -930,10 +951,12 @@ const MapPage: React.FC = () => {
 
         /* ========== CONTROLS SECTION ========== */
         .controls-section {
-          background: white;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+          background: linear-gradient(135deg, #132238 0%, #1e3a5f 100%);
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
           position: relative;
           z-index: 50;
+          border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+          animation: slideDown 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
         .controls-wrapper {
@@ -956,13 +979,19 @@ const MapPage: React.FC = () => {
           gap: 8px;
           font-size: 13px;
           font-weight: 600;
-          color: #475569;
+          color: #93c5fd;
         }
 
         .search-label svg {
           width: 16px;
           height: 16px;
-          color: #3b82f6;
+          color: #60a5fa;
+          animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-3px); }
         }
 
         .toggle-wrapper {
@@ -974,16 +1003,17 @@ const MapPage: React.FC = () => {
           align-items: center;
           justify-content: space-between;
           padding: 12px 24px;
-          border-top: 1px solid #e2e8f0;
-          transition: all 0.3s ease;
+          border-top: 1px solid rgba(59, 130, 246, 0.15);
+          transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .status-bar.online {
-          background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+          background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(16, 185, 129, 0.1) 100%);
+          border-top-color: rgba(34, 197, 94, 0.3);
         }
 
         .status-bar.offline {
-          background: #f8fafc;
+          background: rgba(0, 0, 0, 0.2);
         }
 
         .status-indicator {
@@ -996,13 +1026,13 @@ const MapPage: React.FC = () => {
           width: 10px;
           height: 10px;
           border-radius: 50%;
-          background: #94a3b8;
+          background: #64748b;
           transition: all 0.3s ease;
         }
 
         .status-bar.online .status-dot {
           background: #22c55e;
-          box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+          box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.3);
         }
 
         .status-dot.pulse {
@@ -1010,18 +1040,18 @@ const MapPage: React.FC = () => {
         }
 
         @keyframes pulse-dot {
-          0%, 100% { box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2); }
-          50% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.1); }
+          0%, 100% { box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.3); }
+          50% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0.1); }
         }
 
         .status-text {
           font-size: 13px;
           font-weight: 500;
-          color: #64748b;
+          color: #94a3b8;
         }
 
         .status-bar.online .status-text {
-          color: #16a34a;
+          color: #4ade80;
         }
 
         .destination-tag {
@@ -1029,23 +1059,23 @@ const MapPage: React.FC = () => {
           align-items: center;
           gap: 6px;
           padding: 6px 14px;
-          background: white;
-          border: 1px solid #e2e8f0;
+          background: rgba(59, 130, 246, 0.15);
+          border: 1px solid rgba(59, 130, 246, 0.3);
           border-radius: 20px;
           font-size: 13px;
-          color: #475569;
-          animation: slideIn 0.3s ease;
+          color: #93c5fd;
+          animation: tagSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        @keyframes slideIn {
-          from { opacity: 0; transform: translateX(10px); }
-          to { opacity: 1; transform: translateX(0); }
+        @keyframes tagSlideIn {
+          from { opacity: 0; transform: translateX(20px) scale(0.9); }
+          to { opacity: 1; transform: translateX(0) scale(1); }
         }
 
         .destination-tag svg {
           width: 14px;
           height: 14px;
-          color: #3b82f6;
+          color: #60a5fa;
         }
 
         /* ========== ERROR ALERT ========== */
@@ -1054,26 +1084,33 @@ const MapPage: React.FC = () => {
           align-items: center;
           gap: 12px;
           padding: 14px 24px;
-          background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-          border-bottom: 1px solid #fecaca;
-          animation: slideDown 0.3s ease;
+          background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(185, 28, 28, 0.15) 100%);
+          border-bottom: 1px solid rgba(239, 68, 68, 0.3);
+          animation: errorSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        @keyframes slideDown {
-          from { opacity: 0; transform: translateY(-10px); }
+        @keyframes errorSlide {
+          from { opacity: 0; transform: translateY(-20px); }
           to { opacity: 1; transform: translateY(0); }
         }
 
         .error-alert svg {
           width: 20px;
           height: 20px;
-          color: #dc2626;
+          color: #f87171;
           flex-shrink: 0;
+          animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-5px); }
+          75% { transform: translateX(5px); }
         }
 
         .error-alert span {
           font-size: 14px;
-          color: #b91c1c;
+          color: #fca5a5;
         }
 
         /* ========== MAIN CONTENT ========== */
@@ -1083,6 +1120,8 @@ const MapPage: React.FC = () => {
           gap: 20px;
           padding: 20px 24px;
           overflow: hidden;
+          position: relative;
+          z-index: 1;
         }
 
         .map-wrapper {
@@ -1091,7 +1130,17 @@ const MapPage: React.FC = () => {
           position: relative;
           border-radius: 16px;
           overflow: hidden;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+          box-shadow: 
+            0 4px 30px rgba(0, 0, 0, 0.4),
+            0 0 0 1px rgba(59, 130, 246, 0.2),
+            inset 0 0 60px rgba(0, 0, 0, 0.1);
+          animation: mapFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+          opacity: 0;
+          transform: scale(0.98);
+        }
+
+        @keyframes mapFadeIn {
+          to { opacity: 1; transform: scale(1); }
         }
 
         .map-overlay {
@@ -1106,19 +1155,33 @@ const MapPage: React.FC = () => {
           align-items: center;
           gap: 8px;
           padding: 10px 16px;
-          background: rgba(255, 255, 255, 0.95);
+          background: linear-gradient(135deg, rgba(10, 22, 40, 0.95) 0%, rgba(26, 54, 93, 0.95) 100%);
           backdrop-filter: blur(10px);
           border-radius: 10px;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+          border: 1px solid rgba(59, 130, 246, 0.3);
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
           font-size: 13px;
           font-weight: 500;
-          color: #1e40af;
+          color: #93c5fd;
+          animation: cardFloat 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.4s forwards;
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+
+        @keyframes cardFloat {
+          to { opacity: 1; transform: translateY(0); }
         }
 
         .map-info-card svg {
           width: 16px;
           height: 16px;
-          color: #3b82f6;
+          color: #60a5fa;
+          animation: spin 8s linear infinite;
+        }
+
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
 
         /* ========== SIDE PANEL ========== */
@@ -1128,22 +1191,24 @@ const MapPage: React.FC = () => {
           max-width: 400px;
           display: flex;
           flex-direction: column;
+          animation: panelSlide 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
+          opacity: 0;
+          transform: translateX(30px);
+        }
+
+        @keyframes panelSlide {
+          to { opacity: 1; transform: translateX(0); }
         }
 
         .matches-container {
-          background: white;
+          background: linear-gradient(180deg, #132238 0%, #0d1b2a 100%);
           border-radius: 16px;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+          border: 1px solid rgba(59, 130, 246, 0.2);
+          box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
           overflow: hidden;
           display: flex;
           flex-direction: column;
           height: 100%;
-          animation: fadeIn 0.4s ease;
-        }
-
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
         }
 
         .matches-header {
@@ -1152,6 +1217,7 @@ const MapPage: React.FC = () => {
           justify-content: space-between;
           padding: 18px 20px;
           background: linear-gradient(135deg, #0a1628 0%, #1a365d 100%);
+          border-bottom: 1px solid rgba(59, 130, 246, 0.2);
         }
 
         .matches-title {
@@ -1165,6 +1231,12 @@ const MapPage: React.FC = () => {
           width: 20px;
           height: 20px;
           color: #60a5fa;
+          animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.6; }
         }
 
         .matches-title h3 {
@@ -1173,56 +1245,69 @@ const MapPage: React.FC = () => {
         }
 
         .matches-count {
-          width: 28px;
-          height: 28px;
-          background: rgba(59, 130, 246, 0.3);
+          width: 32px;
+          height: 32px;
+          background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(139, 92, 246, 0.3));
           border: 1px solid rgba(59, 130, 246, 0.5);
-          border-radius: 8px;
+          border-radius: 10px;
           display: flex;
           align-items: center;
           justify-content: center;
           font-size: 14px;
-          font-weight: 600;
+          font-weight: 700;
           color: #93c5fd;
+          animation: countPop 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes countPop {
+          0% { transform: scale(0); }
+          100% { transform: scale(1); }
         }
 
         /* ========== GETTING STARTED ========== */
         .getting-started {
-          background: white;
+          background: linear-gradient(180deg, #132238 0%, #0d1b2a 100%);
+          border: 1px solid rgba(59, 130, 246, 0.2);
           border-radius: 16px;
           padding: 40px 28px;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+          box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
           text-align: center;
-          animation: fadeIn 0.4s ease;
         }
 
         .getting-started-icon {
           width: 72px;
           height: 72px;
-          background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+          background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+          border: 1px solid rgba(59, 130, 246, 0.3);
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           margin: 0 auto 24px;
+          animation: iconFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes iconFloat {
+          0%, 100% { transform: translateY(0) rotate(0deg); }
+          50% { transform: translateY(-8px) rotate(5deg); }
         }
 
         .getting-started-icon svg {
           width: 32px;
           height: 32px;
-          color: #1d4ed8;
+          color: #60a5fa;
         }
 
         .getting-started h3 {
           font-size: 20px;
           font-weight: 700;
-          color: #0f172a;
+          color: white;
           margin-bottom: 8px;
         }
 
         .getting-started p {
           font-size: 14px;
-          color: #64748b;
+          color: #94a3b8;
           margin-bottom: 32px;
           line-height: 1.6;
         }
@@ -1230,7 +1315,7 @@ const MapPage: React.FC = () => {
         .steps {
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 12px;
           text-align: left;
         }
 
@@ -1239,26 +1324,38 @@ const MapPage: React.FC = () => {
           align-items: flex-start;
           gap: 16px;
           padding: 16px;
-          background: #f8fafc;
-          border: 1px solid #e2e8f0;
+          background: rgba(0, 0, 0, 0.2);
+          border: 1px solid rgba(255, 255, 255, 0.05);
           border-radius: 12px;
-          transition: all 0.3s ease;
+          transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+          animation: stepFade 0.4s ease forwards;
+          opacity: 0;
+          transform: translateX(-20px);
+        }
+
+        .step:nth-child(1) { animation-delay: 0.1s; }
+        .step:nth-child(2) { animation-delay: 0.2s; }
+        .step:nth-child(3) { animation-delay: 0.3s; }
+
+        @keyframes stepFade {
+          to { opacity: 1; transform: translateX(0); }
         }
 
         .step.active {
-          background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-          border-color: #93c5fd;
+          background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.05) 100%);
+          border-color: rgba(59, 130, 246, 0.4);
+          transform: translateX(4px);
         }
 
         .step.completed {
-          background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-          border-color: #86efac;
+          background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(34, 197, 94, 0.05) 100%);
+          border-color: rgba(34, 197, 94, 0.4);
         }
 
         .step-number {
           width: 28px;
           height: 28px;
-          background: #e2e8f0;
+          background: rgba(255, 255, 255, 0.1);
           border-radius: 50%;
           display: flex;
           align-items: center;
@@ -1267,19 +1364,25 @@ const MapPage: React.FC = () => {
           font-weight: 700;
           color: #64748b;
           flex-shrink: 0;
-          transition: all 0.3s ease;
+          transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .step.active .step-number {
           background: linear-gradient(135deg, #3b82f6, #1d4ed8);
           color: white;
-          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+          box-shadow: 0 4px 15px rgba(59, 130, 246, 0.5);
+          animation: numberGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes numberGlow {
+          0%, 100% { box-shadow: 0 4px 15px rgba(59, 130, 246, 0.5); }
+          50% { box-shadow: 0 4px 25px rgba(59, 130, 246, 0.8); }
         }
 
         .step.completed .step-number {
           background: linear-gradient(135deg, #22c55e, #16a34a);
           color: white;
-          box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+          box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
         }
 
         .step-content {
@@ -1291,12 +1394,12 @@ const MapPage: React.FC = () => {
         .step-title {
           font-size: 14px;
           font-weight: 600;
-          color: #1e293b;
+          color: #e2e8f0;
         }
 
         .step-desc {
           font-size: 12px;
-          color: #64748b;
+          color: #94a3b8;
         }
 
         /* ========== RESPONSIVE ========== */

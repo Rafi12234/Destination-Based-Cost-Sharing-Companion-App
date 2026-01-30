@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import MapPage from './pages/MapPage';
@@ -14,8 +15,8 @@ const App: React.FC = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Default redirect to login */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        {/* Landing page as default */}
+        <Route path="/" element={<LandingPage />} />
         
         {/* Auth routes */}
         <Route path="/login" element={<Login />} />
@@ -26,7 +27,7 @@ const App: React.FC = () => {
         <Route path="/chat/:chatId" element={<ChatPage />} />
         
         {/* Catch-all redirect */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

@@ -162,27 +162,28 @@ const DestinationSearch: React.FC<DestinationSearchProps> = ({
           width: 100%;
           padding: 14px 48px 14px 18px;
           font-size: 15px;
-          color: #1e293b;
-          background: white;
-          border: 2px solid #e2e8f0;
+          color: #e2e8f0;
+          background: linear-gradient(135deg, #0f1729 0%, #162033 100%);
+          border: 2px solid #1e3a5f;
           border-radius: 12px;
           outline: none;
           transition: all 0.3s ease;
         }
 
         .search-input::placeholder {
-          color: #94a3b8;
+          color: #64748b;
         }
 
         .search-input:focus {
           border-color: #3b82f6;
-          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15), 0 0 20px rgba(59, 130, 246, 0.1);
+          background: linear-gradient(135deg, #0d1421 0%, #152238 100%);
         }
 
         .search-input:disabled {
-          background-color: #f1f5f9;
-          border-color: #e2e8f0;
-          color: #94a3b8;
+          background: #0a1220;
+          border-color: #1a2d47;
+          color: #475569;
           cursor: not-allowed;
         }
 
@@ -191,7 +192,7 @@ const DestinationSearch: React.FC<DestinationSearchProps> = ({
           right: 16px;
           width: 20px;
           height: 20px;
-          border: 2px solid #e2e8f0;
+          border: 2px solid #1e3a5f;
           border-top-color: #3b82f6;
           border-radius: 50%;
           animation: spin 0.8s linear infinite;
@@ -203,7 +204,7 @@ const DestinationSearch: React.FC<DestinationSearchProps> = ({
         }
 
         .search-error {
-          color: #dc2626;
+          color: #f87171;
           font-size: 12px;
           margin-top: 6px;
           padding-left: 4px;
@@ -214,38 +215,70 @@ const DestinationSearch: React.FC<DestinationSearchProps> = ({
           top: calc(100% + 8px);
           left: 0;
           right: 0;
-          background: white;
-          border: 1px solid #e2e8f0;
+          background: linear-gradient(180deg, #132238 0%, #0d1b2a 100%);
+          border: 1px solid #1e3a5f;
           border-radius: 12px;
           max-height: 240px;
           overflow-y: auto;
           z-index: 1000;
           list-style: none;
           padding: 8px;
-          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
-          animation: dropdownFade 0.2s ease;
+          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(59, 130, 246, 0.1);
+          animation: dropdownFade 0.25s ease;
         }
 
         @keyframes dropdownFade {
-          from { opacity: 0; transform: translateY(-8px); }
-          to { opacity: 1; transform: translateY(0); }
+          from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
         .search-result-item {
           padding: 14px 16px;
           cursor: pointer;
           font-size: 14px;
-          color: #334155;
+          color: #cbd5e1;
           border-radius: 8px;
-          transition: all 0.2s ease;
+          transition: all 0.25s ease;
           display: flex;
           align-items: flex-start;
           gap: 10px;
+          animation: itemSlide 0.3s ease backwards;
+        }
+
+        .search-result-item:nth-child(1) { animation-delay: 0.05s; }
+        .search-result-item:nth-child(2) { animation-delay: 0.1s; }
+        .search-result-item:nth-child(3) { animation-delay: 0.15s; }
+        .search-result-item:nth-child(4) { animation-delay: 0.2s; }
+        .search-result-item:nth-child(5) { animation-delay: 0.25s; }
+
+        @keyframes itemSlide {
+          from { opacity: 0; transform: translateX(-10px); }
+          to { opacity: 1; transform: translateX(0); }
         }
 
         .search-result-item:hover {
-          background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-          color: #1d4ed8;
+          background: linear-gradient(135deg, #1e3a5f 0%, #234569 100%);
+          color: #60a5fa;
+          transform: translateX(4px);
+        }
+
+        /* Custom scrollbar for dark theme */
+        .search-results::-webkit-scrollbar {
+          width: 6px;
+        }
+
+        .search-results::-webkit-scrollbar-track {
+          background: #0d1b2a;
+          border-radius: 3px;
+        }
+
+        .search-results::-webkit-scrollbar-thumb {
+          background: #1e3a5f;
+          border-radius: 3px;
+        }
+
+        .search-results::-webkit-scrollbar-thumb:hover {
+          background: #2d4a6f;
         }
       `}</style>
     </div>
