@@ -17,6 +17,7 @@ import {
   updateDestinationLocation,
   subscribeToDestinations,
   getDestination,
+  deleteUserChats,
 } from '@/firebase/firestore';
 import MapView from '@/components/MapView';
 import DestinationSearch from '@/components/DestinationSearch';
@@ -220,13 +221,16 @@ const MapPage: React.FC = () => {
       // 2. Delete destination document from Firestore
       await deleteDestination(user.uid);
 
-      // 3. Unsubscribe from destinations listener
+      // 3. Delete all chats involving this user
+      await deleteUserChats(user.uid);
+
+      // 4. Unsubscribe from destinations listener
       if (destinationsUnsubscribeRef.current) {
         destinationsUnsubscribeRef.current();
         destinationsUnsubscribeRef.current = null;
       }
 
-      // 4. Clear all state - destination, matches, and online status
+      // 5. Clear all state - destination, matches, and online status
       setMatchedUsers([]);
       setDestinationName('');
       setDestinationCoords(null);

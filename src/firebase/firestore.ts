@@ -392,3 +392,38 @@ export async function getUserChats(uid: string): Promise<Chat[]> {
     ...doc.data(),
   })) as Chat[];
 }
+
+/**
+ * Delete all chats involving a user (including messages subcollection)
+ * Called when user goes offline to clean up chat data
+ * @param uid - The user's ID
+ */
+export async function deleteUserChats(uid: string): Promise<void> {
+  // Find all chats where this user is a member
+  const q = query(
+    collection(db, 'chats'),
+    where('members', 'array-contains', uid)
+  );
+  
+  const querySnapshot = await getDocs(q);
+  
+  // Delete each chat and its messages
+  const deletePromises = querySnapshot.docs.map(async (chatDoc) => {
+    const chatId = chatDoc.id;
+    
+    // First, delete all messages in the chat subcollection
+    const messagesQuery = query(collection(db, 'chats', chatId, 'messages'));
+    const messagesSnapshot = await getDocs(messagesQuery);
+    
+    const messageDeletes = messagesSnapshot.docs.map((msgDoc) =>
+      deleteDoc(doc(db, 'chats', chatId, 'messages', msgDoc.id))
+    );
+    
+    await Promise.all(messageDeletes);
+    
+    // Then delete the chat document itself
+    await deleteDoc(doc(db, 'chats', chatId));
+  });
+  
+  await Promise.all(deletePromises);
+}

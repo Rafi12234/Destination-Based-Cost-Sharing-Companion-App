@@ -326,10 +326,43 @@ const MapView: React.FC<MapViewProps> = ({
                       🎯 {match.destination.destinationName}
                     </span>
                     <br />
-                    <span style={{ fontSize: '12px', color: '#666' }}>
-                      📞 {match.destination.phone}
-                    </span>
-                    <br />
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      gap: '6px',
+                      marginTop: '4px'
+                    }}>
+                      <span style={{ fontSize: '12px', color: '#666' }}>
+                        📞 {match.destination.phone}
+                      </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigator.clipboard.writeText(match.destination.phone || '');
+                          const btn = e.currentTarget;
+                          btn.innerHTML = '✓';
+                          btn.style.background = '#22c55e';
+                          setTimeout(() => {
+                            btn.innerHTML = '📋';
+                            btn.style.background = '#64748b';
+                          }, 1500);
+                        }}
+                        title="Copy phone number"
+                        style={{
+                          padding: '3px 6px',
+                          background: '#64748b',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '10px',
+                          transition: 'all 0.2s',
+                        }}
+                      >
+                        📋
+                      </button>
+                    </div>
                     <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', marginTop: '8px' }}>
                       <button
                         onClick={() => handleMarkerClick(match)}
