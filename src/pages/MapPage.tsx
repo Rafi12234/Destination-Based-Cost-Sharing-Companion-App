@@ -48,6 +48,9 @@ const MapPage: React.FC = () => {
   const [matchedUsers, setMatchedUsers] = useState<MatchedUser[]>([]);
   const [isLoadingMatches, setIsLoadingMatches] = useState(false);
 
+  // Map recenter state
+  const [shouldRecenterMap, setShouldRecenterMap] = useState(false);
+
   // Refs for cleanup
   const watchIdRef = useRef<number | null>(null);
   const destinationsUnsubscribeRef = useRef<(() => void) | null>(null);
@@ -673,7 +676,23 @@ const MapPage: React.FC = () => {
             isOnline={isOnline}
             matchedUsers={sortedMatches}
             onUserClick={handleChatClick}
+            shouldRecenter={shouldRecenterMap}
+            onRecenterComplete={() => setShouldRecenterMap(false)}
           />
+          
+          {/* My Location Button */}
+          <button 
+            className="my-location-btn"
+            onClick={() => setShouldRecenterMap(true)}
+            title="Go to my location"
+            disabled={!myLocation}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+              <circle cx="12" cy="12" r="8"/>
+            </svg>
+          </button>
           
           {/* Map Overlay Info */}
           <div className="map-overlay">
@@ -1289,6 +1308,61 @@ const MapPage: React.FC = () => {
 
         @keyframes mapFadeIn {
           to { opacity: 1; transform: scale(1); }
+        }
+
+        /* My Location Button */
+        .my-location-btn {
+          position: absolute;
+          bottom: 24px;
+          right: 16px;
+          z-index: 1000;
+          width: 48px;
+          height: 48px;
+          background: linear-gradient(135deg, rgba(10, 22, 40, 0.95) 0%, rgba(26, 54, 93, 0.95) 100%);
+          backdrop-filter: blur(10px);
+          border: 2px solid rgba(59, 130, 246, 0.4);
+          border-radius: 50%;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          animation: btnFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards;
+          opacity: 0;
+          transform: scale(0.8);
+        }
+
+        @keyframes btnFadeIn {
+          to { opacity: 1; transform: scale(1); }
+        }
+
+        .my-location-btn svg {
+          width: 24px;
+          height: 24px;
+          color: #60a5fa;
+          transition: all 0.3s ease;
+        }
+
+        .my-location-btn:hover:not(:disabled) {
+          border-color: #3b82f6;
+          background: linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(29, 78, 216, 0.3) 100%);
+          transform: scale(1.05);
+          box-shadow: 0 6px 25px rgba(59, 130, 246, 0.4);
+        }
+
+        .my-location-btn:hover:not(:disabled) svg {
+          color: #93c5fd;
+          transform: scale(1.1);
+        }
+
+        .my-location-btn:active:not(:disabled) {
+          transform: scale(0.95);
+        }
+
+        .my-location-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
         }
 
         .map-overlay {

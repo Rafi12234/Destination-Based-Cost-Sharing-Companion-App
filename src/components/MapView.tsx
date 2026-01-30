@@ -68,14 +68,22 @@ const myLocationIcon = L.divIcon({
 // Component to update map center when location changes
 interface MapCenterProps {
   center: Coordinates;
+  shouldRecenter: boolean;
+  onRecenterComplete?: () => void;
 }
 
-const MapCenter: React.FC<MapCenterProps> = ({ center }) => {
+const MapCenter: React.FC<MapCenterProps> = ({ center, shouldRecenter, onRecenterComplete }) => {
   const map = useMap();
   
   useEffect(() => {
-    map.setView([center.lat, center.lng], map.getZoom());
-  }, [center, map]);
+    if (shouldRecenter) {
+      map.flyTo([center.lat, center.lng], 16, {
+        animate: true,
+        duration: 1
+      });
+      onRecenterComplete?.();
+    }
+  }, [shouldRecenter, center, map, onRecenterComplete]);
   
   return null;
 };
@@ -130,6 +138,8 @@ interface MapViewProps {
   isOnline: boolean;
   matchedUsers: MatchedUser[];
   onUserClick?: (uid: string) => void;
+  shouldRecenter?: boolean;
+  onRecenterComplete?: () => void;
 }
 
 const MapView: React.FC<MapViewProps> = ({
@@ -137,6 +147,8 @@ const MapView: React.FC<MapViewProps> = ({
   isOnline,
   matchedUsers,
   onUserClick,
+  shouldRecenter = false,
+  onRecenterComplete,
 }) => {
   // Default center (will be updated when location is available)
   const defaultCenter: Coordinates = myLocation || { lat: 40.7128, lng: -74.006 };
@@ -155,8 +167,14 @@ const MapView: React.FC<MapViewProps> = ({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         
-        {/* Update map center when location changes */}
-        {myLocation && <MapCenter center={myLocation} />}
+        {/* Update map center when recenter is requested */}
+        {myLocation && (
+          <MapCenter 
+            center={myLocation} 
+            shouldRecenter={shouldRecenter}
+            onRecenterComplete={onRecenterComplete}
+          />
+        )}
         
         {/* My location marker */}
         {myLocation && (
