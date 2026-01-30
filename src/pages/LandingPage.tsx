@@ -10,6 +10,7 @@ const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
 
   useEffect(() => {
     setIsLoaded(true);
@@ -21,6 +22,26 @@ const LandingPage: React.FC = () => {
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
+
+  // Smooth scroll handler for anchor links
+  const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
+    e.preventDefault();
+    const element = document.getElementById(targetId);
+    if (element) {
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  };
+
+  // Page transition handler for navigation
+  const handleNavigate = (path: string) => {
+    setIsExiting(true);
+    setTimeout(() => {
+      navigate(path);
+    }, 400);
+  };
 
   return (
     <div className="landing-page">
@@ -56,7 +77,7 @@ const LandingPage: React.FC = () => {
       ></div>
 
       {/* Main Content */}
-      <div className={`content ${isLoaded ? 'loaded' : ''}`}>
+      <div className={`content ${isLoaded ? 'loaded' : ''} ${isExiting ? 'exiting' : ''}`}>
         {/* Navigation */}
         <nav className="navbar">
           <div className="nav-logo">
@@ -70,16 +91,16 @@ const LandingPage: React.FC = () => {
           </div>
           
           <div className="nav-links">
-            <a href="#features" className="nav-link">Features</a>
-            <a href="#how-it-works" className="nav-link">How It Works</a>
-            <a href="#safety" className="nav-link">Safety</a>
+            <a href="#features" className="nav-link" onClick={(e) => handleSmoothScroll(e, 'features')}>Features</a>
+            <a href="#how-it-works" className="nav-link" onClick={(e) => handleSmoothScroll(e, 'how-it-works')}>How It Works</a>
+            <a href="#safety" className="nav-link" onClick={(e) => handleSmoothScroll(e, 'safety')}>Safety</a>
           </div>
 
           <div className="nav-buttons">
-            <button className="btn-signin" onClick={() => navigate('/login')}>
+            <button className="btn-signin" onClick={() => handleNavigate('/login')}>
               Sign In
             </button>
-            <button className="btn-signup" onClick={() => navigate('/register')}>
+            <button className="btn-signup" onClick={() => handleNavigate('/register')}>
               Get Started
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -106,7 +127,7 @@ const LandingPage: React.FC = () => {
           </p>
 
           <div className="hero-buttons">
-            <button className="btn-primary" onClick={() => navigate('/register')}>
+            <button className="btn-primary" onClick={() => handleNavigate('/register')}>
               <span className="btn-content">
                 Start Riding Free
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -116,7 +137,7 @@ const LandingPage: React.FC = () => {
               <span className="btn-glow"></span>
             </button>
             
-            <button className="btn-secondary" onClick={() => navigate('/login')}>
+            <button className="btn-secondary" onClick={() => handleNavigate('/login')}>
               <span className="btn-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"/>
@@ -277,6 +298,61 @@ const LandingPage: React.FC = () => {
           </div>
         </section>
 
+        {/* Safety Section */}
+        <section className="safety-section" id="safety">
+          <div className="section-header">
+            <span className="section-badge">Safety First</span>
+            <h2>Your Safety is Our Priority</h2>
+            <p>We've built multiple layers of security to keep you protected</p>
+          </div>
+
+          <div className="safety-grid">
+            <div className="safety-card">
+              <div className="safety-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  <polyline points="9,12 11,14 15,10"/>
+                </svg>
+              </div>
+              <h3>Verified Profiles</h3>
+              <p>Every user goes through identity verification to ensure authentic connections</p>
+            </div>
+
+            <div className="safety-card">
+              <div className="safety-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+                </svg>
+              </div>
+              <h3>Gender Matching</h3>
+              <p>Optional gender-based matching for added comfort and peace of mind</p>
+            </div>
+
+            <div className="safety-card">
+              <div className="safety-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+                </svg>
+              </div>
+              <h3>In-App Messaging</h3>
+              <p>Communicate securely without sharing personal contact information</p>
+            </div>
+
+            <div className="safety-card">
+              <div className="safety-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12,6 12,12 16,14"/>
+                </svg>
+              </div>
+              <h3>Real-time Tracking</h3>
+              <p>Share your journey with trusted contacts in real-time</p>
+            </div>
+          </div>
+        </section>
+
         {/* CTA Section */}
         <section className="cta-section">
           <div className="cta-content">
@@ -284,13 +360,13 @@ const LandingPage: React.FC = () => {
             <p>Join thousands of smart travelers saving money and making connections every day</p>
             
             <div className="cta-buttons">
-              <button className="btn-cta-primary" onClick={() => navigate('/register')}>
+              <button className="btn-cta-primary" onClick={() => handleNavigate('/register')}>
                 Create Free Account
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M5 12h14M12 5l7 7-7 7"/>
                 </svg>
               </button>
-              <button className="btn-cta-secondary" onClick={() => navigate('/login')}>
+              <button className="btn-cta-secondary" onClick={() => handleNavigate('/login')}>
                 Already have an account? Sign In
               </button>
             </div>
@@ -490,6 +566,12 @@ const LandingPage: React.FC = () => {
         .content.loaded {
           opacity: 1;
           transform: translateY(0);
+        }
+
+        .content.exiting {
+          opacity: 0;
+          transform: translateY(-30px) scale(0.98);
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         /* ========== NAVBAR ========== */
@@ -862,6 +944,7 @@ const LandingPage: React.FC = () => {
         /* ========== FEATURES SECTION ========== */
         .features {
           padding: 120px 60px;
+          scroll-margin-top: 100px;
         }
 
         .section-header {
@@ -981,6 +1064,7 @@ const LandingPage: React.FC = () => {
         .how-it-works {
           padding: 120px 60px;
           background: linear-gradient(180deg, transparent 0%, rgba(59, 130, 246, 0.03) 50%, transparent 100%);
+          scroll-margin-top: 100px;
         }
 
         .steps-container {
@@ -1077,6 +1161,92 @@ const LandingPage: React.FC = () => {
         .step-connector svg {
           width: 100%;
           height: 100%;
+        }
+
+        /* ========== SAFETY SECTION ========== */
+        .safety-section {
+          padding: 120px 60px;
+          position: relative;
+          scroll-margin-top: 100px;
+        }
+
+        .safety-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          gap: 32px;
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+
+        .safety-card {
+          background: linear-gradient(135deg, rgba(19, 34, 56, 0.8) 0%, rgba(26, 45, 71, 0.6) 100%);
+          border: 1px solid rgba(59, 130, 246, 0.15);
+          border-radius: 24px;
+          padding: 40px 32px;
+          text-align: center;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          position: relative;
+          overflow: hidden;
+        }
+
+        .safety-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 3px;
+          background: linear-gradient(90deg, #3b82f6, #60a5fa, #3b82f6);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+
+        .safety-card:hover {
+          transform: translateY(-8px);
+          border-color: rgba(59, 130, 246, 0.3);
+          box-shadow: 0 20px 50px rgba(59, 130, 246, 0.15);
+        }
+
+        .safety-card:hover::before {
+          opacity: 1;
+        }
+
+        .safety-icon {
+          width: 72px;
+          height: 72px;
+          margin: 0 auto 24px;
+          background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(96, 165, 250, 0.1) 100%);
+          border: 1px solid rgba(59, 130, 246, 0.2);
+          border-radius: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.4s ease;
+        }
+
+        .safety-card:hover .safety-icon {
+          transform: scale(1.1) rotate(5deg);
+          background: linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(96, 165, 250, 0.15) 100%);
+          box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
+        }
+
+        .safety-icon svg {
+          width: 36px;
+          height: 36px;
+          color: #60a5fa;
+        }
+
+        .safety-card h3 {
+          font-size: 20px;
+          font-weight: 700;
+          color: #f1f5f9;
+          margin-bottom: 12px;
+        }
+
+        .safety-card p {
+          font-size: 15px;
+          color: #94a3b8;
+          line-height: 1.6;
         }
 
         /* ========== CTA SECTION ========== */

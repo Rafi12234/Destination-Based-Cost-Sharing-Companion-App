@@ -3,8 +3,8 @@
  * Professional modern design with blue theme
  */
 
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { signIn } from '@/firebase/auth';
 
 const Login: React.FC = () => {
@@ -14,6 +14,17 @@ const Login: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    setIsLoaded(true);
+  }, []);
+
+  const handleNavigate = (path: string) => {
+    const wrapper = document.querySelector('.login-page');
+    wrapper?.classList.add('page-exit');
+    setTimeout(() => navigate(path), 300);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,11 +54,25 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="login-page">
+    <div className={`login-page ${isLoaded ? 'loaded' : ''}`}>
+      {/* Animated Background */}
+      <div className="bg-gradient"></div>
+      <div className="bg-grid"></div>
+      
+      {/* Floating Particles */}
+      <div className="particles">
+        {[...Array(15)].map((_, i) => (
+          <div key={i} className={`particle particle-${i + 1}`}></div>
+        ))}
+      </div>
+
+      {/* Glowing Orbs */}
+      <div className="glow-orb orb-1"></div>
+      <div className="glow-orb orb-2"></div>
       {/* Left Panel - Branding */}
       <div className="brand-panel">
         <div className="brand-content">
-          <div className="logo">
+          <div className="logo" onClick={() => handleNavigate('/')}>
             <div className="logo-icon">
               <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 2L4 7V17L12 22L20 17V7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -200,9 +225,9 @@ const Login: React.FC = () => {
           <div className="form-footer">
             <p>
               Don't have an account?{' '}
-              <Link to="/register" className="register-link">
+              <button type="button" className="register-link" onClick={() => handleNavigate('/register')}>
                 Create account
-              </Link>
+              </button>
             </p>
           </div>
         </div>
@@ -218,13 +243,130 @@ const Login: React.FC = () => {
         .login-page {
           min-height: 100vh;
           display: flex;
-          background: #f8fafc;
+          position: relative;
+          overflow: hidden;
+          opacity: 0;
+          transform: translateY(20px);
+          transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .login-page.loaded {
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        .login-page.page-exit {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
+
+        /* ========== BACKGROUND ========== */
+        .bg-gradient {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: 
+            radial-gradient(ellipse at 30% 20%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+            radial-gradient(ellipse at 70% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+            linear-gradient(180deg, #0a1628 0%, #0d1b2a 50%, #0a1628 100%);
+          z-index: 0;
+        }
+
+        .bg-grid {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-image: 
+            linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
+          background-size: 50px 50px;
+          z-index: 0;
+        }
+
+        /* ========== PARTICLES ========== */
+        .particles {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 0;
+          pointer-events: none;
+        }
+
+        .particle {
+          position: absolute;
+          width: 4px;
+          height: 4px;
+          background: rgba(59, 130, 246, 0.5);
+          border-radius: 50%;
+          animation: float 20s infinite ease-in-out;
+        }
+
+        .particle-1 { left: 5%; top: 10%; animation-delay: 0s; }
+        .particle-2 { left: 15%; top: 30%; animation-delay: 1s; }
+        .particle-3 { left: 25%; top: 50%; animation-delay: 2s; }
+        .particle-4 { left: 35%; top: 70%; animation-delay: 3s; }
+        .particle-5 { left: 45%; top: 20%; animation-delay: 4s; }
+        .particle-6 { left: 55%; top: 40%; animation-delay: 5s; }
+        .particle-7 { left: 65%; top: 60%; animation-delay: 6s; }
+        .particle-8 { left: 75%; top: 80%; animation-delay: 7s; }
+        .particle-9 { left: 85%; top: 15%; animation-delay: 8s; }
+        .particle-10 { left: 95%; top: 35%; animation-delay: 9s; }
+        .particle-11 { left: 10%; top: 55%; animation-delay: 10s; }
+        .particle-12 { left: 20%; top: 75%; animation-delay: 11s; }
+        .particle-13 { left: 30%; top: 25%; animation-delay: 12s; }
+        .particle-14 { left: 70%; top: 45%; animation-delay: 13s; }
+        .particle-15 { left: 90%; top: 65%; animation-delay: 14s; }
+
+        @keyframes float {
+          0%, 100% { transform: translate(0, 0); }
+          25% { transform: translate(30px, -20px); }
+          50% { transform: translate(-15px, -40px); }
+          75% { transform: translate(20px, -15px); }
+        }
+
+        /* ========== GLOWING ORBS ========== */
+        .glow-orb {
+          position: fixed;
+          border-radius: 50%;
+          filter: blur(80px);
+          z-index: 0;
+          pointer-events: none;
+        }
+
+        .orb-1 {
+          width: 400px;
+          height: 400px;
+          background: radial-gradient(circle, rgba(59, 130, 246, 0.25) 0%, transparent 70%);
+          top: -100px;
+          right: -50px;
+          animation: orbPulse 8s ease-in-out infinite;
+        }
+
+        .orb-2 {
+          width: 300px;
+          height: 300px;
+          background: radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, transparent 70%);
+          bottom: -80px;
+          left: -50px;
+          animation: orbPulse 10s ease-in-out infinite reverse;
+        }
+
+        @keyframes orbPulse {
+          0%, 100% { transform: scale(1); opacity: 0.6; }
+          50% { transform: scale(1.2); opacity: 0.8; }
         }
 
         /* Left Panel - Branding */
         .brand-panel {
           flex: 1;
-          background: linear-gradient(135deg, #0a1628 0%, #1a365d 50%, #0d2137 100%);
+          background: linear-gradient(135deg, rgba(19, 34, 56, 0.95) 0%, rgba(26, 45, 71, 0.9) 100%);
+          backdrop-filter: blur(20px);
           padding: 48px;
           display: flex;
           flex-direction: column;
@@ -232,6 +374,7 @@ const Login: React.FC = () => {
           align-items: center;
           position: relative;
           overflow: hidden;
+          z-index: 1;
         }
 
         .brand-panel::before {
@@ -269,17 +412,30 @@ const Login: React.FC = () => {
           justify-content: center;
           gap: 12px;
           margin-bottom: 48px;
+          cursor: pointer;
+          transition: transform 0.3s ease;
+        }
+
+        .logo:hover {
+          transform: translateX(-5px);
         }
 
         .logo-icon {
-          width: 48px;
-          height: 48px;
+          width: 52px;
+          height: 52px;
           background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-          border-radius: 12px;
+          border-radius: 14px;
           display: flex;
           align-items: center;
           justify-content: center;
           color: white;
+          box-shadow: 0 8px 25px rgba(59, 130, 246, 0.35);
+          animation: logoFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes logoFloat {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-5px); }
         }
 
         .logo-icon svg {
@@ -288,10 +444,9 @@ const Login: React.FC = () => {
         }
 
         .logo-text {
-          font-size: 24px;
-          font-weight: 700;
+          font-size: 26px;
+          font-weight: 800;
           color: white;
-          letter-spacing: -0.5px;
         }
 
         .brand-title {
@@ -301,6 +456,12 @@ const Login: React.FC = () => {
           line-height: 1.2;
           margin-bottom: 16px;
           letter-spacing: -1px;
+          animation: textSlide 0.6s ease 0.3s backwards;
+        }
+
+        @keyframes textSlide {
+          from { opacity: 0; transform: translateX(-20px); }
+          to { opacity: 1; transform: translateX(0); }
         }
 
         .brand-subtitle {
@@ -308,6 +469,7 @@ const Login: React.FC = () => {
           color: rgba(255, 255, 255, 0.7);
           line-height: 1.6;
           margin-bottom: 48px;
+          animation: textSlide 0.6s ease 0.4s backwards;
         }
 
         .features {
@@ -321,23 +483,39 @@ const Login: React.FC = () => {
           display: flex;
           align-items: flex-start;
           gap: 16px;
+          animation: featureSlide 0.5s ease backwards;
+        }
+
+        .feature:nth-child(1) { animation-delay: 0.5s; }
+        .feature:nth-child(2) { animation-delay: 0.6s; }
+        .feature:nth-child(3) { animation-delay: 0.7s; }
+
+        @keyframes featureSlide {
+          from { opacity: 0; transform: translateX(-20px); }
+          to { opacity: 1; transform: translateX(0); }
         }
 
         .feature-icon {
-          width: 44px;
-          height: 44px;
+          width: 48px;
+          height: 48px;
           background: rgba(59, 130, 246, 0.15);
           border: 1px solid rgba(59, 130, 246, 0.3);
-          border-radius: 10px;
+          border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
+          transition: all 0.3s ease;
+        }
+
+        .feature:hover .feature-icon {
+          background: rgba(59, 130, 246, 0.25);
+          transform: scale(1.1);
         }
 
         .feature-icon svg {
-          width: 22px;
-          height: 22px;
+          width: 24px;
+          height: 24px;
           color: #60a5fa;
         }
 
@@ -374,12 +552,21 @@ const Login: React.FC = () => {
           align-items: center;
           justify-content: center;
           padding: 48px;
-          background: #f8fafc;
+          background: rgba(10, 22, 40, 0.5);
+          backdrop-filter: blur(20px);
+          position: relative;
+          z-index: 1;
         }
 
         .form-container {
           width: 100%;
           max-width: 420px;
+          animation: formFade 0.6s ease 0.4s backwards;
+        }
+
+        @keyframes formFade {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
 
         .form-header {
@@ -389,14 +576,14 @@ const Login: React.FC = () => {
         .form-header h2 {
           font-size: 28px;
           font-weight: 700;
-          color: #0f172a;
+          color: #f1f5f9;
           margin-bottom: 8px;
           letter-spacing: -0.5px;
         }
 
         .form-header p {
           font-size: 15px;
-          color: #64748b;
+          color: #94a3b8;
         }
 
         .error-alert {
@@ -404,22 +591,29 @@ const Login: React.FC = () => {
           align-items: center;
           gap: 12px;
           padding: 14px 16px;
-          background: #fef2f2;
-          border: 1px solid #fecaca;
-          border-radius: 10px;
+          background: rgba(239, 68, 68, 0.1);
+          border: 1px solid rgba(239, 68, 68, 0.3);
+          border-radius: 12px;
           margin-bottom: 24px;
+          animation: shake 0.4s ease;
+        }
+
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-5px); }
+          75% { transform: translateX(5px); }
         }
 
         .error-alert svg {
           width: 20px;
           height: 20px;
-          color: #dc2626;
+          color: #f87171;
           flex-shrink: 0;
         }
 
         .error-alert span {
           font-size: 14px;
-          color: #dc2626;
+          color: #fca5a5;
         }
 
         .login-form {
@@ -436,8 +630,8 @@ const Login: React.FC = () => {
 
         .input-group label {
           font-size: 14px;
-          font-weight: 500;
-          color: #374151;
+          font-weight: 600;
+          color: #cbd5e1;
         }
 
         .input-wrapper {
@@ -448,42 +642,50 @@ const Login: React.FC = () => {
 
         .input-icon {
           position: absolute;
-          left: 14px;
+          left: 16px;
           width: 20px;
           height: 20px;
-          color: #94a3b8;
+          color: #64748b;
           pointer-events: none;
+          transition: color 0.3s ease;
         }
 
         .input-wrapper input {
           width: 100%;
-          padding: 14px 14px 14px 46px;
+          padding: 16px 16px 16px 50px;
           font-size: 15px;
-          color: #1e293b;
-          background: white;
-          border: 2px solid #e2e8f0;
-          border-radius: 10px;
+          color: #e2e8f0;
+          background: rgba(19, 34, 56, 0.8);
+          border: 2px solid rgba(59, 130, 246, 0.15);
+          border-radius: 14px;
           outline: none;
-          transition: all 0.2s ease;
+          transition: all 0.3s ease;
         }
 
         .input-wrapper input::placeholder {
-          color: #94a3b8;
+          color: #64748b;
         }
 
         .input-wrapper input:focus {
           border-color: #3b82f6;
+          background: rgba(19, 34, 56, 1);
           box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
         }
 
+        .input-wrapper input:focus + .input-icon,
+        .input-wrapper:focus-within .input-icon {
+          color: #60a5fa;
+        }
+
         .input-wrapper input:disabled {
-          background: #f1f5f9;
+          background: rgba(19, 34, 56, 0.5);
           cursor: not-allowed;
+          opacity: 0.6;
         }
 
         .password-toggle {
           position: absolute;
-          right: 14px;
+          right: 16px;
           background: none;
           border: none;
           cursor: pointer;
@@ -491,54 +693,73 @@ const Login: React.FC = () => {
           display: flex;
           align-items: center;
           justify-content: center;
+          color: #64748b;
+          transition: color 0.3s ease;
+        }
+
+        .password-toggle:hover {
+          color: #60a5fa;
         }
 
         .password-toggle svg {
           width: 20px;
           height: 20px;
-          color: #94a3b8;
-          transition: color 0.2s;
-        }
-
-        .password-toggle:hover svg {
-          color: #64748b;
         }
 
         .submit-btn {
           width: 100%;
-          padding: 14px 24px;
-          font-size: 15px;
+          padding: 16px 24px;
+          font-size: 16px;
           font-weight: 600;
           color: white;
-          background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+          background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
           border: none;
-          border-radius: 10px;
+          border-radius: 14px;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 8px;
+          gap: 10px;
           margin-top: 8px;
+          box-shadow: 0 4px 20px rgba(59, 130, 246, 0.35);
+          position: relative;
+          overflow: hidden;
+        }
+
+        .submit-btn::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+          transition: left 0.5s ease;
+        }
+
+        .submit-btn:hover::before {
+          left: 100%;
         }
 
         .submit-btn:hover:not(:disabled) {
-          transform: translateY(-1px);
-          box-shadow: 0 8px 20px rgba(59, 130, 246, 0.35);
+          transform: translateY(-3px);
+          box-shadow: 0 8px 30px rgba(59, 130, 246, 0.5);
         }
 
         .submit-btn:active:not(:disabled) {
-          transform: translateY(0);
+          transform: translateY(-1px);
         }
 
         .submit-btn:disabled {
-          opacity: 0.7;
+          opacity: 0.6;
           cursor: not-allowed;
+          transform: none;
         }
 
         .spinner {
-          width: 18px;
-          height: 18px;
+          width: 20px;
+          height: 20px;
           border: 2px solid rgba(255, 255, 255, 0.3);
           border-top-color: white;
           border-radius: 50%;
@@ -560,15 +781,32 @@ const Login: React.FC = () => {
         }
 
         .register-link {
-          color: #2563eb;
-          text-decoration: none;
+          background: none;
+          border: none;
+          color: #60a5fa;
           font-weight: 600;
-          transition: color 0.2s;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          position: relative;
+        }
+
+        .register-link::after {
+          content: '';
+          position: absolute;
+          bottom: -2px;
+          left: 0;
+          width: 0;
+          height: 2px;
+          background: #60a5fa;
+          transition: width 0.3s ease;
+        }
+
+        .register-link:hover::after {
+          width: 100%;
         }
 
         .register-link:hover {
-          color: #1d4ed8;
-          text-decoration: underline;
+          color: #93c5fd;
         }
 
         /* Responsive */
@@ -592,13 +830,13 @@ const Login: React.FC = () => {
           }
 
           .input-wrapper input {
-            padding: 12px 12px 12px 42px;
+            padding: 14px 14px 14px 46px;
             font-size: 14px;
           }
 
           .submit-btn {
-            padding: 12px 20px;
-            font-size: 14px;
+            padding: 14px 20px;
+            font-size: 15px;
           }
         }
       `}</style>
