@@ -159,10 +159,7 @@ const Register: React.FC = () => {
             {/* Logo */}
             <div className="logo" onClick={() => handleNavigate('/')}>
               <div className="logo-icon">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 2L4 7V17L12 22L20 17V7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
-                </svg>
+                <img src="https://res.cloudinary.com/dnzjg9lq8/image/upload/v1769803479/Adobe_Express_-_file_sul5xs.png" alt="RideSplit Logo" />
               </div>
               <span className="logo-text">RideSplit</span>
             </div>
@@ -735,11 +732,11 @@ const Register: React.FC = () => {
         .logo-icon {
           width: 52px;
           height: 52px;
-          background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
           border-radius: 14px;
           display: flex;
           align-items: center;
           justify-content: center;
+          overflow: hidden;
           box-shadow: 0 8px 25px rgba(59, 130, 246, 0.35);
           animation: logoFloat 3s ease-in-out infinite;
         }
@@ -749,10 +746,10 @@ const Register: React.FC = () => {
           50% { transform: translateY(-5px); }
         }
 
-        .logo-icon svg {
-          width: 28px;
-          height: 28px;
-          color: white;
+        .logo-icon img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
         }
 
         .logo-text {

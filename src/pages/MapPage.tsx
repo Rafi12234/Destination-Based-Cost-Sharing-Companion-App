@@ -564,10 +564,7 @@ const MapPage: React.FC = () => {
         <div className="header-left">
           <div className="logo" title="RideSplit">
             <div className="logo-icon">
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L4 7V17L12 22L20 17V7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
-              </svg>
+              <img src="https://res.cloudinary.com/dnzjg9lq8/image/upload/v1769803479/Adobe_Express_-_file_sul5xs.png" alt="RideSplit Logo" />
             </div>
             <span className="logo-text">RideSplit</span>
           </div>
@@ -898,12 +895,10 @@ const MapPage: React.FC = () => {
         .logo-icon {
           width: 44px;
           height: 44px;
-          background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
           border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
-          color: white;
           box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
           transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
           position: relative;
@@ -919,15 +914,17 @@ const MapPage: React.FC = () => {
           height: 100%;
           background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
           transition: left 0.5s ease;
+          z-index: 2;
         }
 
         .logo:hover .logo-icon::before {
           left: 100%;
         }
 
-        .logo-icon svg {
-          width: 24px;
-          height: 24px;
+        .logo-icon img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
           position: relative;
           z-index: 1;
         }

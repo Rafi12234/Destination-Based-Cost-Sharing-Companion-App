@@ -82,10 +82,7 @@ const LandingPage: React.FC = () => {
         <nav className="navbar">
           <div className="nav-logo">
             <div className="logo-icon">
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L4 7V17L12 22L20 17V7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
-              </svg>
+              <img src="https://res.cloudinary.com/dnzjg9lq8/image/upload/v1769803479/Adobe_Express_-_file_sul5xs.png" alt="RideSplit Logo" />
             </div>
             <span>RideSplit</span>
           </div>
@@ -385,10 +382,7 @@ const LandingPage: React.FC = () => {
             <div className="footer-brand">
               <div className="footer-logo">
                 <div className="logo-icon">
-                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2L4 7V17L12 22L20 17V7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
-                  </svg>
+                  <img src="https://res.cloudinary.com/dnzjg9lq8/image/upload/v1769803479/Adobe_Express_-_file_sul5xs.png" alt="RideSplit Logo" />
                 </div>
                 <span>RideSplit</span>
               </div>
@@ -608,18 +602,18 @@ const LandingPage: React.FC = () => {
         .nav-logo .logo-icon {
           width: 44px;
           height: 44px;
-          background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
           border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
-          color: white;
+          overflow: hidden;
           box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
         }
 
-        .nav-logo .logo-icon svg {
-          width: 24px;
-          height: 24px;
+        .nav-logo .logo-icon img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
         }
 
         .nav-links {
@@ -1407,17 +1401,17 @@ const LandingPage: React.FC = () => {
         .footer-logo .logo-icon {
           width: 44px;
           height: 44px;
-          background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
           border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
-          color: white;
+          overflow: hidden;
         }
 
-        .footer-logo .logo-icon svg {
-          width: 24px;
-          height: 24px;
+        .footer-logo .logo-icon img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
         }
 
         .footer-brand p {
