@@ -2,10 +2,11 @@
  * Map View Component
  * Renders Leaflet map with OpenStreetMap tiles
  * Shows user location, matched users as markers, and 2km radius circle
+ * Supports route display when clicking on matched users
  */
 
 import React, { useEffect, useRef, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMap, Polyline } from 'react-leaflet';
 import L from 'leaflet';
 import { MatchedUser, Coordinates } from '@/types/models';
 import { formatDistance } from '@/utils/geo';
@@ -65,6 +66,52 @@ const myLocationIcon = L.divIcon({
   iconAnchor: [10, 10],
 });
 
+// Route info interface
+interface RouteInfo {
+  coordinates: [number, number][];
+  distance: number; // in meters
+  duration: number; // in seconds
+  targetUser: MatchedUser;
+}
+
+// Fetch route from OSRM (Open Source Routing Machine)
+async function fetchRoute(
+  from: Coordinates,
+  to: Coordinates
+): Promise<{ coordinates: [number, number][]; distance: number; duration: number } | null> {
+  try {
+    const url = `https://router.project-osrm.org/route/v1/driving/${from.lng},${from.lat};${to.lng},${to.lat}?overview=full&geometries=geojson`;
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+      const route = data.routes[0];
+      // Convert GeoJSON coordinates [lng, lat] to Leaflet format [lat, lng]
+      const coordinates: [number, number][] = route.geometry.coordinates.map(
+        (coord: [number, number]) => [coord[1], coord[0]]
+      );
+      return {
+        coordinates,
+        distance: route.distance,
+        duration: route.duration,
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching route:', error);
+    return null;
+  }
+}
+
+// Format duration to readable string
+function formatDuration(seconds: number): string {
+  if (seconds < 60) return `${Math.round(seconds)} sec`;
+  if (seconds < 3600) return `${Math.round(seconds / 60)} min`;
+  const hours = Math.floor(seconds / 3600);
+  const mins = Math.round((seconds % 3600) / 60);
+  return `${hours}h ${mins}m`;
+}
+
 // Component to update map center when location changes
 interface MapCenterProps {
   center: Coordinates;
@@ -84,6 +131,24 @@ const MapCenter: React.FC<MapCenterProps> = ({ center, shouldRecenter, onRecente
       onRecenterComplete?.();
     }
   }, [shouldRecenter, center, map, onRecenterComplete]);
+  
+  return null;
+};
+
+// Component to fit map bounds to show route
+interface FitRouteBoundsProps {
+  routeCoordinates: [number, number][] | null;
+}
+
+const FitRouteBounds: React.FC<FitRouteBoundsProps> = ({ routeCoordinates }) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (routeCoordinates && routeCoordinates.length > 0) {
+      const bounds = L.latLngBounds(routeCoordinates);
+      map.fitBounds(bounds, { padding: [50, 50], animate: true, duration: 0.5 });
+    }
+  }, [routeCoordinates, map]);
   
   return null;
 };
@@ -150,8 +215,46 @@ const MapView: React.FC<MapViewProps> = ({
   shouldRecenter = false,
   onRecenterComplete,
 }) => {
+  // Route state
+  const [activeRoute, setActiveRoute] = useState<RouteInfo | null>(null);
+  const [isLoadingRoute, setIsLoadingRoute] = useState(false);
+  
   // Default center (will be updated when location is available)
   const defaultCenter: Coordinates = myLocation || { lat: 40.7128, lng: -74.006 };
+  
+  // Handle marker click to show route
+  const handleMarkerClick = async (match: MatchedUser) => {
+    if (!myLocation || !match.destination) return;
+    
+    // If clicking the same user, clear the route
+    if (activeRoute?.targetUser.uid === match.uid) {
+      setActiveRoute(null);
+      return;
+    }
+    
+    setIsLoadingRoute(true);
+    
+    const targetLocation: Coordinates = {
+      lat: match.destination.currentLat,
+      lng: match.destination.currentLng,
+    };
+    
+    const routeData = await fetchRoute(myLocation, targetLocation);
+    
+    if (routeData) {
+      setActiveRoute({
+        ...routeData,
+        targetUser: match,
+      });
+    }
+    
+    setIsLoadingRoute(false);
+  };
+  
+  // Clear route
+  const clearRoute = () => {
+    setActiveRoute(null);
+  };
   
   return (
     <div className="map-view">
@@ -206,7 +309,10 @@ const MapView: React.FC<MapViewProps> = ({
               <AnimatedMarker
                 key={match.uid}
                 position={{ lat: match.destination.currentLat, lng: match.destination.currentLng }}
-                icon={createCustomIcon(match.isNear ? '#4CAF50' : '#9E9E9E', match.isNear)}
+                icon={createCustomIcon(
+                  activeRoute?.targetUser.uid === match.uid ? '#2196F3' : (match.isNear ? '#4CAF50' : '#9E9E9E'),
+                  match.isNear || activeRoute?.targetUser.uid === match.uid
+                )}
               >
                 <Popup>
                   <div style={{ textAlign: 'center' }}>
@@ -224,27 +330,106 @@ const MapView: React.FC<MapViewProps> = ({
                       📞 {match.destination.phone}
                     </span>
                     <br />
-                    <button
-                      onClick={() => onUserClick?.(match.uid)}
-                      style={{
-                        marginTop: '8px',
-                        padding: '6px 12px',
-                        background: '#2196F3',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontSize: '12px',
-                      }}
-                    >
-                      💬 Chat
-                    </button>
+                    <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', marginTop: '8px' }}>
+                      <button
+                        onClick={() => handleMarkerClick(match)}
+                        style={{
+                          padding: '6px 10px',
+                          background: activeRoute?.targetUser.uid === match.uid ? '#f44336' : '#4CAF50',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '11px',
+                        }}
+                      >
+                        {activeRoute?.targetUser.uid === match.uid ? '✕ Hide' : '🛣️ Route'}
+                      </button>
+                      <button
+                        onClick={() => onUserClick?.(match.uid)}
+                        style={{
+                          padding: '6px 10px',
+                          background: '#2196F3',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '11px',
+                        }}
+                      >
+                        💬 Chat
+                      </button>
+                    </div>
                   </div>
                 </Popup>
               </AnimatedMarker>
             ) : null
           )}
+        
+        {/* Route polyline */}
+        {activeRoute && (
+          <>
+            <Polyline
+              positions={activeRoute.coordinates}
+              pathOptions={{
+                color: '#2196F3',
+                weight: 5,
+                opacity: 0.8,
+                lineCap: 'round',
+                lineJoin: 'round',
+              }}
+            />
+            {/* Route glow effect */}
+            <Polyline
+              positions={activeRoute.coordinates}
+              pathOptions={{
+                color: '#64B5F6',
+                weight: 10,
+                opacity: 0.3,
+                lineCap: 'round',
+                lineJoin: 'round',
+              }}
+            />
+            <FitRouteBounds routeCoordinates={activeRoute.coordinates} />
+          </>
+        )}
       </MapContainer>
+      
+      {/* Route Info Panel */}
+      {activeRoute && (
+        <div className="route-info-panel">
+          <div className="route-info-header">
+            <span className="route-info-title">🛣️ Route to {activeRoute.targetUser.profile.name}</span>
+            <button className="route-close-btn" onClick={clearRoute}>✕</button>
+          </div>
+          <div className="route-info-stats">
+            <div className="route-stat">
+              <span className="route-stat-icon">📏</span>
+              <span className="route-stat-value">{formatDistance(activeRoute.distance)}</span>
+              <span className="route-stat-label">Distance</span>
+            </div>
+            <div className="route-stat">
+              <span className="route-stat-icon">⏱️</span>
+              <span className="route-stat-value">{formatDuration(activeRoute.duration)}</span>
+              <span className="route-stat-label">Est. Time</span>
+            </div>
+          </div>
+          <button 
+            className="route-chat-btn"
+            onClick={() => onUserClick?.(activeRoute.targetUser.uid)}
+          >
+            💬 Chat with {activeRoute.targetUser.profile.name}
+          </button>
+        </div>
+      )}
+      
+      {/* Loading indicator */}
+      {isLoadingRoute && (
+        <div className="route-loading">
+          <div className="route-loading-spinner"></div>
+          <span>Finding best route...</span>
+        </div>
+      )}
       
       <style>{`
         .map-view {
@@ -253,6 +438,7 @@ const MapView: React.FC<MapViewProps> = ({
           border-radius: 12px;
           overflow: hidden;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          position: relative;
         }
         
         .leaflet-container {
@@ -263,6 +449,148 @@ const MapView: React.FC<MapViewProps> = ({
         .my-location-marker {
           background: transparent;
           border: none;
+        }
+        
+        /* Route Info Panel */
+        .route-info-panel {
+          position: absolute;
+          bottom: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 1000;
+          background: linear-gradient(135deg, rgba(10, 22, 40, 0.95) 0%, rgba(26, 54, 93, 0.95) 100%);
+          backdrop-filter: blur(10px);
+          border-radius: 16px;
+          padding: 16px;
+          min-width: 280px;
+          max-width: 90%;
+          border: 1px solid rgba(59, 130, 246, 0.3);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+          animation: slideUp 0.3s ease-out;
+        }
+        
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateX(-50%) translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+          }
+        }
+        
+        .route-info-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 12px;
+        }
+        
+        .route-info-title {
+          color: white;
+          font-weight: 600;
+          font-size: 14px;
+        }
+        
+        .route-close-btn {
+          background: rgba(255, 255, 255, 0.1);
+          border: none;
+          color: #94a3b8;
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s ease;
+        }
+        
+        .route-close-btn:hover {
+          background: rgba(239, 68, 68, 0.3);
+          color: #ef4444;
+        }
+        
+        .route-info-stats {
+          display: flex;
+          gap: 20px;
+          justify-content: center;
+          margin-bottom: 12px;
+        }
+        
+        .route-stat {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 4px;
+        }
+        
+        .route-stat-icon {
+          font-size: 18px;
+        }
+        
+        .route-stat-value {
+          color: #60a5fa;
+          font-size: 18px;
+          font-weight: 700;
+        }
+        
+        .route-stat-label {
+          color: #64748b;
+          font-size: 11px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        
+        .route-chat-btn {
+          width: 100%;
+          padding: 10px 16px;
+          background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+          color: white;
+          border: none;
+          border-radius: 10px;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        
+        .route-chat-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+        
+        /* Loading indicator */
+        .route-loading {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          z-index: 1000;
+          background: rgba(10, 22, 40, 0.9);
+          backdrop-filter: blur(10px);
+          border-radius: 12px;
+          padding: 20px 30px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          color: white;
+          font-size: 14px;
+          border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        
+        .route-loading-spinner {
+          width: 20px;
+          height: 20px;
+          border: 3px solid rgba(59, 130, 246, 0.3);
+          border-top-color: #3b82f6;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+          to { transform: rotate(360deg); }
         }
       `}</style>
     </div>
