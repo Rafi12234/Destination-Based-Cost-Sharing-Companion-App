@@ -603,7 +603,7 @@ const MapPage: React.FC = () => {
         
         <div className="header-center">
           {userProfile && (
-            <div className="user-badge">
+            <div className="user-badge" onClick={() => navigate('/profile')} title="View Profile">
               <div className="user-avatar">
                 {userProfile.name.charAt(0).toUpperCase()}
               </div>
@@ -992,7 +992,7 @@ const MapPage: React.FC = () => {
           border-radius: 60px;
           backdrop-filter: blur(10px);
           transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-          cursor: default;
+          cursor: pointer;
           position: relative;
           overflow: hidden;
         }
@@ -1013,6 +1013,7 @@ const MapPage: React.FC = () => {
         .user-badge:hover {
           background: rgba(255, 255, 255, 0.12);
           border-color: rgba(59, 130, 246, 0.3);
+          transform: scale(1.02);
           transform: translateY(-2px);
           box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
         }
@@ -1798,12 +1799,23 @@ const MapPage: React.FC = () => {
 
           .controls-wrapper {
             flex-direction: column;
-            gap: 12px;
+            gap: 16px;
             padding: 16px;
+          }
+
+          .search-wrapper {
+            width: 100%;
           }
 
           .toggle-wrapper {
             width: 100%;
+            display: flex;
+            justify-content: center;
+          }
+
+          .toggle-wrapper > * {
+            width: 100%;
+            max-width: 100%;
           }
 
           .main-content {
@@ -1816,6 +1828,26 @@ const MapPage: React.FC = () => {
 
           .getting-started {
             padding: 24px 20px;
+          }
+
+          .status-bar {
+            flex-direction: column;
+            gap: 10px;
+            text-align: center;
+            padding: 12px 16px;
+          }
+
+          .zone-legend {
+            padding: 10px 12px;
+          }
+
+          .legend-title {
+            font-size: 10px;
+            margin-bottom: 8px;
+          }
+
+          .legend-item {
+            padding: 4px 0;
           }
         }
 

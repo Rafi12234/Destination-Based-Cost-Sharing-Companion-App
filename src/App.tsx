@@ -10,6 +10,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import MapPage from './pages/MapPage';
 import ChatPage from './pages/ChatPage';
+import ProfilePage from './pages/ProfilePage';
 
 const App: React.FC = () => {
   return (
@@ -25,6 +26,7 @@ const App: React.FC = () => {
         {/* Main app routes */}
         <Route path="/map" element={<MapPage />} />
         <Route path="/chat/:chatId" element={<ChatPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
         
         {/* Catch-all redirect */}
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -50,6 +50,21 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
 }
 
 /**
+ * Update user profile (name and phone only)
+ * @param uid - The user's unique ID
+ * @param data - Object containing name and phone to update
+ */
+export async function updateUserProfile(
+  uid: string,
+  data: { name: string; phone: string }
+): Promise<void> {
+  await updateDoc(doc(db, 'Profile', uid), {
+    name: data.name,
+    phone: data.phone,
+  });
+}
+
+/**
  * Get multiple user profiles by UIDs
  * @param uids - Array of user IDs to fetch
  * @returns Map of uid to UserProfile

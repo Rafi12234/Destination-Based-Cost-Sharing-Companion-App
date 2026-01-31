@@ -136,6 +136,14 @@ const OnlineToggle: React.FC<OnlineToggleProps> = ({
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
+
+        @media (max-width: 768px) {
+          .online-toggle {
+            width: 100%;
+            padding: 16px 28px;
+            font-size: 16px;
+          }
+        }
       `}</style>
     </button>
   );
