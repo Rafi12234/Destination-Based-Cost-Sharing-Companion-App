@@ -23,10 +23,37 @@ const DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
+// Distance zone types and colors
+type DistanceZone = 'very-close' | 'far' | 'very-far';
+
+const getDistanceZone = (distance: number): DistanceZone => {
+  if (distance <= 500) return 'very-close';
+  if (distance <= 1000) return 'far';
+  return 'very-far';
+};
+
+const getZoneColor = (zone: DistanceZone): string => {
+  switch (zone) {
+    case 'very-close': return '#22c55e'; // Green
+    case 'far': return '#f59e0b'; // Orange/Amber
+    case 'very-far': return '#ef4444'; // Red
+  }
+};
+
+const getZoneLabel = (zone: DistanceZone): string => {
+  switch (zone) {
+    case 'very-close': return 'Very Close';
+    case 'far': return 'Far';
+    case 'very-far': return 'Very Far';
+  }
+};
+
 // Custom marker icons
-const createCustomIcon = (color: string, isNear: boolean) => {
-  const size = isNear ? 40 : 30;
-  const opacity = isNear ? 1 : 0.6;
+const createCustomIcon = (color: string, isHighlighted: boolean, zone: DistanceZone) => {
+  const baseSize = zone === 'very-close' ? 44 : zone === 'far' ? 38 : 32;
+  const size = isHighlighted ? baseSize + 6 : baseSize;
+  const opacity = zone === 'very-close' ? 1 : zone === 'far' ? 0.85 : 0.7;
+  const glowSize = zone === 'very-close' ? '0 0 20px' : zone === 'far' ? '0 0 12px' : '0 0 8px';
   
   return L.divIcon({
     className: 'custom-marker',
@@ -34,15 +61,16 @@ const createCustomIcon = (color: string, isNear: boolean) => {
       <div style="
         width: ${size}px;
         height: ${size}px;
-        background: ${color};
+        background: linear-gradient(135deg, ${color} 0%, ${color}dd 100%);
         border: 3px solid white;
         border-radius: 50%;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        box-shadow: ${glowSize} ${color}80, 0 4px 12px rgba(0,0,0,0.3);
         opacity: ${opacity};
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: ${size * 0.4}px;
+        transition: all 0.3s ease;
       ">🚗</div>
     `,
     iconSize: [size, size],
@@ -288,44 +316,104 @@ const MapView: React.FC<MapViewProps> = ({
           </Marker>
         )}
         
-        {/* 2km radius circle (shows when online) */}
+        {/* Distance Zone Circles (shows when online) */}
         {isOnline && myLocation && (
-          <Circle
-            center={[myLocation.lat, myLocation.lng]}
-            radius={2000}
-            pathOptions={{
-              color: '#4CAF50',
-              fillColor: '#4CAF50',
-              fillOpacity: 0.1,
-              weight: 2,
-              dashArray: '10, 5',
-            }}
-          />
+          <>
+            {/* Very Far Zone - 2km (Red) */}
+            <Circle
+              center={[myLocation.lat, myLocation.lng]}
+              radius={2000}
+              pathOptions={{
+                color: '#ef4444',
+                fillColor: '#ef4444',
+                fillOpacity: 0.05,
+                weight: 2,
+                dashArray: '8, 6',
+              }}
+            />
+            {/* Far Zone - 1km (Orange) */}
+            <Circle
+              center={[myLocation.lat, myLocation.lng]}
+              radius={1000}
+              pathOptions={{
+                color: '#f59e0b',
+                fillColor: '#f59e0b',
+                fillOpacity: 0.08,
+                weight: 2,
+                dashArray: '6, 4',
+              }}
+            />
+            {/* Very Close Zone - 500m (Green) */}
+            <Circle
+              center={[myLocation.lat, myLocation.lng]}
+              radius={500}
+              pathOptions={{
+                color: '#22c55e',
+                fillColor: '#22c55e',
+                fillOpacity: 0.12,
+                weight: 3,
+              }}
+            />
+          </>
         )}
         
         {/* Matched user markers (shows nearby users) */}
-        {matchedUsers.map((match) =>
-            match.destination ? (
+        {matchedUsers.map((match) => {
+            const zone = getDistanceZone(match.distance);
+            const zoneColor = getZoneColor(zone);
+            const zoneLabel = getZoneLabel(zone);
+            const isHighlighted = activeRoute?.targetUser.uid === match.uid;
+            
+            return match.destination ? (
               <AnimatedMarker
                 key={match.uid}
                 position={{ lat: match.destination.currentLat, lng: match.destination.currentLng }}
                 icon={createCustomIcon(
-                  activeRoute?.targetUser.uid === match.uid ? '#2196F3' : (match.isNear ? '#4CAF50' : '#9E9E9E'),
-                  match.isNear || activeRoute?.targetUser.uid === match.uid
+                  isHighlighted ? '#3b82f6' : zoneColor,
+                  isHighlighted,
+                  zone
                 )}
               >
                 <Popup>
-                  <div style={{ textAlign: 'center' }}>
-                    <strong>{match.profile.name}</strong>
-                    <br />
-                    <span style={{ fontSize: '12px', color: '#666' }}>
-                      📍 {formatDistance(match.distance)}
-                    </span>
-                    <br />
-                    <span style={{ fontSize: '12px', color: '#666' }}>
+                  <div style={{ textAlign: 'center', minWidth: '180px' }}>
+                    <strong style={{ fontSize: '15px' }}>{match.profile.name}</strong>
+                    
+                    {/* Distance Status Badge */}
+                    <div style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '4px 10px',
+                      borderRadius: '20px',
+                      background: `${zoneColor}20`,
+                      border: `1px solid ${zoneColor}`,
+                      margin: '8px 0',
+                    }}>
+                      <span style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        background: zoneColor,
+                        boxShadow: `0 0 8px ${zoneColor}`,
+                      }}></span>
+                      <span style={{
+                        fontSize: '11px',
+                        fontWeight: '600',
+                        color: zoneColor,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                      }}>
+                        {zoneLabel}
+                      </span>
+                      <span style={{ fontSize: '11px', color: '#666' }}>
+                        ({formatDistance(match.distance)})
+                      </span>
+                    </div>
+                    
+                    <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>
                       🎯 {match.destination.destinationName}
-                    </span>
-                    <br />
+                    </div>
+                    
                     <div style={{ 
                       display: 'flex', 
                       alignItems: 'center', 
@@ -397,7 +485,7 @@ const MapView: React.FC<MapViewProps> = ({
                 </Popup>
               </AnimatedMarker>
             ) : null
-          )}
+          })}
         
         {/* Route polyline */}
         {activeRoute && (

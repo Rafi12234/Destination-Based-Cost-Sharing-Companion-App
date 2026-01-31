@@ -1,12 +1,32 @@
 /**
  * Match List Component
  * Displays list of matched users sorted by distance
- * Shows name, distance, and chat button
+ * Shows name, distance zone status, and chat button
  */
 
 import React from 'react';
 import { MatchedUser } from '@/types/models';
 import { formatDistance } from '@/utils/geo';
+
+// Distance zone types
+type DistanceZone = 'very-close' | 'far' | 'very-far';
+
+const getDistanceZone = (distance: number): DistanceZone => {
+  if (distance <= 500) return 'very-close';
+  if (distance <= 1000) return 'far';
+  return 'very-far';
+};
+
+const getZoneInfo = (zone: DistanceZone) => {
+  switch (zone) {
+    case 'very-close': 
+      return { label: 'Very Close', color: '#22c55e', bg: 'rgba(34, 197, 94, 0.15)', border: 'rgba(34, 197, 94, 0.4)' };
+    case 'far': 
+      return { label: 'Far', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.15)', border: 'rgba(245, 158, 11, 0.4)' };
+    case 'very-far': 
+      return { label: 'Very Far', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.15)', border: 'rgba(239, 68, 68, 0.4)' };
+  }
+};
 
 interface MatchListProps {
   matches: MatchedUser[];
@@ -51,31 +71,51 @@ const MatchList: React.FC<MatchListProps> = ({
       </div>
       
       <div className="match-list-content">
-        {matches.map((match) => (
-          <div
-            key={match.uid}
-            className={`match-item ${match.isNear ? 'near' : 'far'}`}
-          >
-            <div className="match-info">
-              <div className="match-name">
-                {match.profile.name}
-                {match.isNear && <span className="near-badge">Nearby</span>}
-              </div>
-              <div className="match-details">
-                <span className="distance">📍 {formatDistance(match.distance)}</span>
-                <span className="destination">🎯 {match.destination.destinationName}</span>
-                <span className="phone">📞 {match.destination.phone}</span>
-              </div>
-            </div>
-            
-            <button
-              className="chat-button"
-              onClick={() => onChatClick(match.uid)}
+        {matches.map((match) => {
+          const zone = getDistanceZone(match.distance);
+          const zoneInfo = getZoneInfo(zone);
+          
+          return (
+            <div
+              key={match.uid}
+              className={`match-item zone-${zone}`}
+              style={{
+                borderColor: zoneInfo.border,
+                boxShadow: `0 0 20px ${zoneInfo.bg}`,
+              }}
             >
-              💬 Chat
-            </button>
-          </div>
-        ))}
+              <div className="match-info">
+                <div className="match-name">
+                  {match.profile.name}
+                  <span 
+                    className="zone-badge"
+                    style={{
+                      background: `linear-gradient(135deg, ${zoneInfo.color}, ${zoneInfo.color}cc)`,
+                      boxShadow: `0 2px 12px ${zoneInfo.color}60`,
+                    }}
+                  >
+                    <span className="zone-dot" style={{ background: 'white' }}></span>
+                    {zoneInfo.label}
+                  </span>
+                </div>
+                <div className="match-details">
+                  <span className="distance" style={{ color: zoneInfo.color }}>
+                    📍 {formatDistance(match.distance)}
+                  </span>
+                  <span className="destination">🎯 {match.destination.destinationName}</span>
+                  <span className="phone">📞 {match.destination.phone}</span>
+                </div>
+              </div>
+              
+              <button
+                className="chat-button"
+                onClick={() => onChatClick(match.uid)}
+              >
+                💬 Chat
+              </button>
+            </div>
+          );
+        })}
       </div>
       
       <style>{styles}</style>
@@ -186,7 +226,7 @@ const styles = `
     margin: 10px 0;
     border-radius: 14px;
     background: linear-gradient(135deg, #132238 0%, #1a2d47 100%);
-    border: 1px solid #1e3a5f;
+    border: 2px solid;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     animation: matchSlide 0.4s ease forwards;
     opacity: 0;
@@ -222,25 +262,19 @@ const styles = `
 
   .match-item:hover {
     background: linear-gradient(135deg, #1a2d47 0%, #234569 100%);
-    border-color: #3b82f6;
-    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.2), 0 0 0 1px rgba(59, 130, 246, 0.1);
     transform: translateY(-3px) scale(1.01);
   }
 
-  .match-item.near {
+  .match-item.zone-very-close {
     background: linear-gradient(135deg, #0f2818 0%, #14532d 100%);
-    border: 1px solid #22c55e;
-    box-shadow: 0 0 20px rgba(34, 197, 94, 0.15);
   }
 
-  .match-item.near:hover {
-    border-color: #4ade80;
-    box-shadow: 0 8px 24px rgba(34, 197, 94, 0.25);
+  .match-item.zone-far {
+    background: linear-gradient(135deg, #1c1a0f 0%, #422006 100%);
   }
 
-  .match-item.far {
-    background: linear-gradient(135deg, #132238 0%, #1a2d47 100%);
-    border: 1px solid #1e3a5f;
+  .match-item.zone-very-far {
+    background: linear-gradient(135deg, #1f0f0f 0%, #450a0a 100%);
   }
 
   .match-info {
@@ -256,6 +290,38 @@ const styles = `
     align-items: center;
     gap: 10px;
     margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+
+  .zone-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    animation: badgePulse 2s ease-in-out infinite;
+  }
+
+  .zone-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    animation: dotPulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes dotPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(0.8); }
+  }
+
+  @keyframes badgePulse {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.2); }
   }
 
   .near-badge {
@@ -269,11 +335,6 @@ const styles = `
     letter-spacing: 0.5px;
     animation: badgePulse 2s ease-in-out infinite;
     box-shadow: 0 2px 8px rgba(34, 197, 94, 0.4);
-  }
-
-  @keyframes badgePulse {
-    0%, 100% { box-shadow: 0 2px 8px rgba(34, 197, 94, 0.4); }
-    50% { box-shadow: 0 2px 16px rgba(34, 197, 94, 0.6); }
   }
 
   .match-details {
@@ -294,8 +355,7 @@ const styles = `
   }
 
   .distance {
-    color: #60a5fa;
-    font-weight: 500;
+    font-weight: 600;
   }
 
   .chat-button {

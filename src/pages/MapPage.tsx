@@ -722,14 +722,25 @@ const MapPage: React.FC = () => {
             </svg>
           </button>
           
-          {/* Map Overlay Info */}
+          {/* Map Overlay Info - Zone Legend */}
           <div className="map-overlay">
-            <div className="map-info-card">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10"/>
-                <polyline points="12 6 12 12 16 14"/>
-              </svg>
-              <span>2km radius</span>
+            <div className="zone-legend">
+              <div className="legend-title">Distance Zones</div>
+              <div className="legend-item">
+                <span className="legend-circle very-close"></span>
+                <span className="legend-label">Very Close</span>
+                <span className="legend-distance">0-500m</span>
+              </div>
+              <div className="legend-item">
+                <span className="legend-circle far"></span>
+                <span className="legend-label">Far</span>
+                <span className="legend-distance">500m-1km</span>
+              </div>
+              <div className="legend-item">
+                <span className="legend-circle very-far"></span>
+                <span className="legend-label">Very Far</span>
+                <span className="legend-distance">1km-2km</span>
+              </div>
             </div>
           </div>
         </div>
@@ -1400,6 +1411,76 @@ const MapPage: React.FC = () => {
           z-index: 1000;
         }
 
+        .zone-legend {
+          padding: 14px 16px;
+          background: linear-gradient(135deg, rgba(10, 22, 40, 0.95) 0%, rgba(26, 54, 93, 0.95) 100%);
+          backdrop-filter: blur(12px);
+          border-radius: 12px;
+          border: 1px solid rgba(59, 130, 246, 0.3);
+          box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+          animation: cardFloat 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.4s forwards;
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+
+        .legend-title {
+          font-size: 11px;
+          font-weight: 600;
+          color: #94a3b8;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          margin-bottom: 12px;
+          padding-bottom: 8px;
+          border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+        .legend-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 6px 0;
+        }
+
+        .legend-circle {
+          width: 14px;
+          height: 14px;
+          border-radius: 50%;
+          border: 2px solid rgba(255, 255, 255, 0.3);
+          flex-shrink: 0;
+        }
+
+        .legend-circle.very-close {
+          background: #22c55e;
+          box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+        }
+
+        .legend-circle.far {
+          background: #f59e0b;
+          box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+        }
+
+        .legend-circle.very-far {
+          background: #ef4444;
+          box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+        }
+
+        .legend-label {
+          font-size: 12px;
+          font-weight: 600;
+          color: #f1f5f9;
+          flex: 1;
+        }
+
+        .legend-distance {
+          font-size: 11px;
+          color: #64748b;
+          font-weight: 500;
+        }
+
+        @keyframes cardFloat {
+          to { opacity: 1; transform: translateY(0); }
+        }
+
         .map-info-card {
           display: flex;
           align-items: center;
@@ -1416,10 +1497,6 @@ const MapPage: React.FC = () => {
           animation: cardFloat 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.4s forwards;
           opacity: 0;
           transform: translateY(-10px);
-        }
-
-        @keyframes cardFloat {
-          to { opacity: 1; transform: translateY(0); }
         }
 
         .map-info-card svg {
