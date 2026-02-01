@@ -132,6 +132,7 @@ const Login: React.FC = () => {
       </div>
 
       {/* Right Panel - Login Form */}
+      
       <div className="form-panel">
         <div className="form-container">
           <div className="form-header">
