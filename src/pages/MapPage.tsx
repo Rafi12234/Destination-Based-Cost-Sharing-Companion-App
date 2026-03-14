@@ -1750,7 +1750,7 @@ const MapPage: React.FC = () => {
 
           .side-panel {
             max-width: none;
-            max-height: 280px;
+            max-height: none;
           }
 
           .map-wrapper {
@@ -1797,6 +1797,21 @@ const MapPage: React.FC = () => {
         }
 
         @media (max-width: 768px) {
+          /* Allow the page to scroll on mobile */
+          .map-page {
+            height: auto;
+            min-height: 100svh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+          }
+
+          /* Main content grows naturally instead of being clipped */
+          .main-content {
+            overflow: visible;
+            flex: none;
+          }
+
           .header {
             padding: 10px 16px;
           }
