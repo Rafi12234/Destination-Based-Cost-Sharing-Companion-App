@@ -37,14 +37,15 @@ function toRadians(degrees: number): number {
 }
 
 /**
- * Check if two destinations match (within 500 meters)
+ * Check if two destinations are compatible for ride-sharing (within 1.5 km)
+ * This allows matching users heading to the same area, even if not the exact same place.
  * @param dest1 - First destination coordinates
  * @param dest2 - Second destination coordinates
- * @returns true if destinations are within 500m of each other
+ * @returns true if destinations are within 1500m of each other
  */
 export function destinationsMatch(dest1: Coordinates, dest2: Coordinates): boolean {
   const distance = haversineDistance(dest1, dest2);
-  return distance <= 500; // 500 meters threshold
+  return distance <= 1500; // 1.5 km threshold — covers nearby destinations in the same direction
 }
 
 /**
