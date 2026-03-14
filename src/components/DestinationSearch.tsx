@@ -8,6 +8,65 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { debounce } from '@/utils/debounce';
 import { NominatimResult, Coordinates } from '@/types/models';
 
+const SUGGESTION_LIMIT = 12;
+
+const normalizeText = (value: string): string =>
+  value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const buildSearchUrl = (searchQuery: string) => {
+  const params = new URLSearchParams({
+    format: 'jsonv2',
+    q: searchQuery,
+    limit: String(SUGGESTION_LIMIT),
+    addressdetails: '1',
+    dedupe: '0',
+    countrycodes: 'bd',
+    'accept-language': 'en,bn',
+  });
+
+  return `https://nominatim.openstreetmap.org/search?${params.toString()}`;
+};
+
+const rankAndFilterResults = (data: NominatimResult[], searchQuery: string): NominatimResult[] => {
+  const normalizedQuery = normalizeText(searchQuery);
+  const queryTokens = normalizedQuery.split(' ').filter(Boolean);
+  const seen = new Set<string>();
+
+  const scored = data
+    .filter((item) => {
+      const key = `${item.lat}:${item.lon}:${item.display_name}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+
+      const display = item.display_name.toLowerCase();
+      return display.includes('bangladesh') || display.includes(', bd');
+    })
+    .map((item) => {
+      const normalizedName = normalizeText(item.display_name);
+      let score = 0;
+
+      if (normalizedName.startsWith(normalizedQuery)) score += 120;
+      if (normalizedName.includes(normalizedQuery)) score += 80;
+
+      const tokenMatches = queryTokens.filter((token) => normalizedName.includes(token)).length;
+      score += tokenMatches * 20;
+
+      if (item.display_name.includes(',')) score += 5;
+
+      return { item, score };
+    })
+    .sort((a, b) => b.score - a.score)
+    .map((entry) => entry.item);
+
+  return scored.slice(0, SUGGESTION_LIMIT);
+};
+
 interface DestinationSearchProps {
   onDestinationSelect: (name: string, coords: Coordinates) => void;
   disabled?: boolean;
@@ -28,8 +87,9 @@ const DestinationSearch: React.FC<DestinationSearchProps> = ({
 
   // Nominatim API search function
   const searchPlaces = async (searchQuery: string) => {
-    if (searchQuery.length < 3) {
+    if (searchQuery.trim().length < 2) {
       setResults([]);
+      setShowDropdown(false);
       return;
     }
 
@@ -37,29 +97,47 @@ const DestinationSearch: React.FC<DestinationSearchProps> = ({
     setError(null);
 
     try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-          searchQuery
-        )}&limit=5`,
-        {
-          headers: {
-            // Nominatim requires a valid User-Agent
-            'User-Agent': 'RideSplitMatch/1.0',
-          },
-        }
-      );
+      const response = await fetch(buildSearchUrl(searchQuery), {
+        headers: {
+          // Nominatim requires a valid User-Agent
+          'User-Agent': 'RideSplitMatch/1.0',
+        },
+      });
 
       if (!response.ok) {
         throw new Error('Search failed');
       }
 
       const data: NominatimResult[] = await response.json();
-      setResults(data);
+      let rankedResults = rankAndFilterResults(data, searchQuery);
+
+      // Fallback search for spelling variance: reorder words and search again if needed.
+      if (rankedResults.length === 0 && searchQuery.trim().includes(' ')) {
+        const reversedQuery = searchQuery
+          .trim()
+          .split(/\s+/)
+          .reverse()
+          .join(' ');
+
+        const fallbackResponse = await fetch(buildSearchUrl(reversedQuery), {
+          headers: {
+            'User-Agent': 'RideSplitMatch/1.0',
+          },
+        });
+
+        if (fallbackResponse.ok) {
+          const fallbackData: NominatimResult[] = await fallbackResponse.json();
+          rankedResults = rankAndFilterResults(fallbackData, searchQuery);
+        }
+      }
+
+      setResults(rankedResults);
       setShowDropdown(true);
     } catch (err) {
       console.error('Nominatim search error:', err);
-      setError('Failed to search. Please try again.');
+      setError('Failed to search places in Bangladesh. Please try again.');
       setResults([]);
+      setShowDropdown(false);
     } finally {
       setIsLoading(false);
     }
@@ -123,11 +201,15 @@ const DestinationSearch: React.FC<DestinationSearchProps> = ({
           value={query}
           onChange={handleInputChange}
           onFocus={() => results.length > 0 && setShowDropdown(true)}
-          placeholder="Enter your destination..."
+          placeholder="Search destination in Bangladesh..."
           disabled={disabled}
           className="search-input"
         />
         {isLoading && <span className="search-loading"></span>}
+      </div>
+
+      <div className="search-hint">
+        Bangladesh locations only. Type place names as shown on map labels for best results.
       </div>
 
       {error && <div className="search-error">{error}</div>}
@@ -207,6 +289,13 @@ const DestinationSearch: React.FC<DestinationSearchProps> = ({
           color: #f87171;
           font-size: 12px;
           margin-top: 6px;
+          padding-left: 4px;
+        }
+
+        .search-hint {
+          margin-top: 6px;
+          font-size: 12px;
+          color: #7aa2cf;
           padding-left: 4px;
         }
 
