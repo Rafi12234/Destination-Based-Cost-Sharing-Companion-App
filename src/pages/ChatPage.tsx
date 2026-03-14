@@ -13,7 +13,7 @@ import {
   sendMessage,
   subscribeToMessages,
 } from '@/firebase/firestore';
-import { Chat, Message, UserProfile } from '@/types/models';
+import { Chat, FirestoreTimeValue, Message, UserProfile } from '@/types/models';
 
 const ChatPage: React.FC = () => {
   const { chatId } = useParams<{ chatId: string }>();
@@ -131,6 +131,11 @@ const ChatPage: React.FC = () => {
     }
   };
 
+  const handleQuickReply = (text: string) => {
+    setNewMessage(text);
+    inputRef.current?.focus();
+  };
+
   // Send message handler
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -152,15 +157,32 @@ const ChatPage: React.FC = () => {
     }
   };
 
+  const toMillis = (timestamp: FirestoreTimeValue): number => {
+    if (typeof timestamp === 'number') return timestamp;
+    if (timestamp && typeof timestamp === 'object') {
+      if (typeof timestamp.toMillis === 'function') {
+        return timestamp.toMillis();
+      }
+      if (typeof timestamp.seconds === 'number') {
+        return timestamp.seconds * 1000;
+      }
+    }
+    return 0;
+  };
+
   // Format timestamp
-  const formatTime = (timestamp: number): string => {
-    const date = new Date(timestamp);
+  const formatTime = (timestamp: FirestoreTimeValue): string => {
+    const millis = toMillis(timestamp);
+    if (!millis) return '...';
+    const date = new Date(millis);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   // Format date for message groups
-  const formatDate = (timestamp: number): string => {
-    const date = new Date(timestamp);
+  const formatDate = (timestamp: FirestoreTimeValue): string => {
+    const millis = toMillis(timestamp);
+    if (!millis) return 'Today';
+    const date = new Date(millis);
     const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
@@ -361,6 +383,18 @@ const ChatPage: React.FC = () => {
         )}
         
         <div ref={messagesEndRef} />
+      </div>
+
+      <div className="quick-replies">
+        <button type="button" onClick={() => handleQuickReply('I am on my way.')}>
+          On my way
+        </button>
+        <button type="button" onClick={() => handleQuickReply('I am nearby, where are you?')}>
+          I am nearby
+        </button>
+        <button type="button" onClick={() => handleQuickReply('Please share your ETA.')}> 
+          Share ETA
+        </button>
       </div>
 
       {/* Input Area */}
