@@ -16,6 +16,7 @@ import {
   orderBy,
   addDoc,
   onSnapshot,
+  serverTimestamp,
   Unsubscribe,
 } from 'firebase/firestore';
 import { db } from './firebase';
@@ -322,7 +323,7 @@ export async function getOrCreateChat(uid1: string, uid2: string): Promise<strin
   // Create new chat
   const docRef = await addDoc(collection(db, 'chats'), {
     members,
-    createdAt: Date.now(),
+    createdAt: serverTimestamp(),
   });
   
   return docRef.id;
@@ -354,13 +355,13 @@ export async function sendMessage(chatId: string, senderId: string, text: string
   await addDoc(collection(db, 'chats', chatId, 'messages'), {
     senderId,
     text,
-    createdAt: Date.now(),
+    createdAt: serverTimestamp(),
   });
   
   // Update chat's last message
   await updateDoc(doc(db, 'chats', chatId), {
     lastMessage: text,
-    lastMessageAt: Date.now(),
+    lastMessageAt: serverTimestamp(),
   });
 }
 
