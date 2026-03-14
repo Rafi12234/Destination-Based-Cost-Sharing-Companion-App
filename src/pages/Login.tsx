@@ -4,11 +4,18 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { signIn } from '@/firebase/auth';
+import { useLocation, useNavigate } from 'react-router-dom';
+import {
+  isGmailAddress,
+  reloadAuthUser,
+  sendVerificationEmail,
+  signIn,
+  signOut,
+} from '@/firebase/auth';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -19,6 +26,14 @@ const Login: React.FC = () => {
   useEffect(() => {
     setIsLoaded(true);
   }, []);
+
+  useEffect(() => {
+    const notice = (location.state as { notice?: string } | null)?.notice;
+    if (notice) {
+      setError(notice);
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location.pathname, location.state, navigate]);
 
   const handleNavigate = (path: string) => {
     const wrapper = document.querySelector('.login-page');
@@ -31,8 +46,23 @@ const Login: React.FC = () => {
     setError(null);
     setIsLoading(true);
 
+    if (!isGmailAddress(email)) {
+      setError('Please sign in with your Gmail address.');
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      await signIn(email, password);
+      const user = await signIn(email, password);
+
+      const refreshedUser = await reloadAuthUser(user);
+      if (!refreshedUser.emailVerified) {
+        await sendVerificationEmail(refreshedUser);
+        await signOut();
+        setError('Your email is not verified yet. We sent a new verification email.');
+        return;
+      }
+
       navigate('/map');
     } catch (err: any) {
       console.error('Login error:', err);
@@ -164,7 +194,7 @@ const Login: React.FC = () => {
                   id="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
+                  placeholder="name@gmail.com"
                   required
                   disabled={isLoading}
                 />
