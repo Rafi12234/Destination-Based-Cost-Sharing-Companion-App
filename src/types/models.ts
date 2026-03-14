@@ -88,6 +88,7 @@ export interface MatchedUser {
   destination: Destination;
   distance: number; // Distance from current user in meters
   isNear: boolean; // Within 2km radius
+  destinationDistance: number; // Distance between our two destinations in meters
 }
 
 // Coordinates type for cleaner function signatures
