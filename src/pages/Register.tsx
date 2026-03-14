@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signUp } from '@/firebase/auth';
+import { isGmailAddress, sendVerificationEmail, signOut, signUp } from '@/firebase/auth';
 import { createUserProfile } from '@/firebase/firestore';
 import { UserProfile } from '@/types/models';
 
@@ -42,8 +42,8 @@ const Register: React.FC = () => {
       setError('Please enter your full name.');
       return false;
     }
-    if (!formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-      setError('Please enter a valid email address.');
+    if (!isGmailAddress(formData.email)) {
+      setError('Please use a valid Gmail address (example@gmail.com).');
       return false;
     }
     return true;
@@ -92,7 +92,7 @@ const Register: React.FC = () => {
     e.preventDefault();
     setError(null);
 
-    if (!validateStep3()) {
+    if (!validateStep1() || !validateStep2() || !validateStep3()) {
       return;
     }
 
@@ -111,14 +111,20 @@ const Register: React.FC = () => {
       };
 
       await createUserProfile(userProfile);
-      navigate('/map');
+      await sendVerificationEmail(user);
+      await signOut();
+      navigate('/login', {
+        state: {
+          notice: `Verification email sent to ${formData.email}. Please verify before signing in.`,
+        },
+      });
     } catch (err: any) {
       console.error('Registration error:', err);
 
       if (err.code === 'auth/email-already-in-use') {
         setError('This email is already registered. Please sign in instead.');
       } else if (err.code === 'auth/invalid-email') {
-        setError('Please enter a valid email address.');
+        setError('Please enter a valid Gmail address.');
       } else if (err.code === 'auth/weak-password') {
         setError('Password is too weak. Please use a stronger password.');
       } else {
@@ -306,11 +312,12 @@ const Register: React.FC = () => {
                       onChange={handleChange}
                       onFocus={() => setFocusedField('email')}
                       onBlur={() => setFocusedField(null)}
-                      placeholder="you@example.com"
+                      placeholder="you@gmail.com"
                       disabled={isLoading}
                       className="form-input"
                     />
                   </div>
+                  <small className="input-hint">Only Gmail addresses are accepted for this MVP.</small>
                 </div>
               </div>
 
@@ -1117,6 +1124,13 @@ const Register: React.FC = () => {
         .form-input:disabled {
           opacity: 0.5;
           cursor: not-allowed;
+        }
+
+        .input-hint {
+          display: block;
+          margin-top: 8px;
+          font-size: 12px;
+          color: #93c5fd;
         }
 
         /* ========== GENDER OPTIONS ========== */
