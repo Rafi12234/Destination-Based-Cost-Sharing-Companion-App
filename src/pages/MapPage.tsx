@@ -1180,7 +1180,7 @@ const MapPage: React.FC = () => {
 
         .controls-wrapper {
           display: flex;
-          align-items: flex-end;
+          align-items: center;
           gap: 20px;
           padding: 20px 24px;
         }
@@ -1215,6 +1215,8 @@ const MapPage: React.FC = () => {
 
         .toggle-wrapper {
           flex-shrink: 0;
+          display: flex;
+          align-items: center;
         }
 
         .status-bar {
