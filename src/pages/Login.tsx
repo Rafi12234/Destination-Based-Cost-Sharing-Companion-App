@@ -849,6 +849,13 @@ const Login: React.FC = () => {
         }
 
         @media (max-width: 480px) {
+          /* Allow page to scroll on small screens */
+          .login-page {
+            overflow-x: hidden;
+            overflow-y: auto;
+            align-items: flex-start;
+          }
+
           .form-container {
             max-width: 100%;
           }
