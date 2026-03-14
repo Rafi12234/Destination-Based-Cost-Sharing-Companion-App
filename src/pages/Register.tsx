@@ -1474,6 +1474,15 @@ const Register: React.FC = () => {
         }
 
         @media (max-width: 500px) {
+          /* Allow page to scroll on small screens */
+          .register-page {
+            overflow-x: hidden;
+            overflow-y: auto;
+            align-items: flex-start;
+            padding-top: 16px;
+            padding-bottom: 24px;
+          }
+
           .register-container {
             margin: 10px;
             border-radius: 24px;
