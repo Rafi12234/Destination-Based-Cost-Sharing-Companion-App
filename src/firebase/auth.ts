@@ -8,9 +8,13 @@ import {
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   onAuthStateChanged,
+  sendEmailVerification,
+  reload,
   User,
 } from 'firebase/auth';
 import { auth } from './firebase';
+
+const GMAIL_REGEX = /^[^\s@]+@gmail\.com$/i;
 
 /**
  * Sign in with email and password
@@ -39,6 +43,28 @@ export async function signUp(email: string, password: string): Promise<User> {
  */
 export async function signOut(): Promise<void> {
   await firebaseSignOut(auth);
+}
+
+/**
+ * Check whether an email is a valid Gmail address.
+ */
+export function isGmailAddress(email: string): boolean {
+  return GMAIL_REGEX.test(email.trim());
+}
+
+/**
+ * Send a verification email to the user.
+ */
+export async function sendVerificationEmail(user: User): Promise<void> {
+  await sendEmailVerification(user);
+}
+
+/**
+ * Reload the user from Firebase Auth to get fresh emailVerified state.
+ */
+export async function reloadAuthUser(user: User): Promise<User> {
+  await reload(user);
+  return auth.currentUser ?? user;
 }
 
 /**
