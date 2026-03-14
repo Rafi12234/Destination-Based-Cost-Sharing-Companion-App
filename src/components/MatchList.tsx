@@ -57,7 +57,7 @@ const MatchList: React.FC<MatchListProps> = ({
         <div className="match-list-empty">
           <div className="empty-icon">🔍</div>
           <p>No matches found yet</p>
-          <small>Users going to the same destination will appear here</small>
+          <small>Users heading to the same or nearby destination (&lt;1.5 km away) will appear here</small>
         </div>
         <style>{styles}</style>
       </div>
@@ -74,6 +74,11 @@ const MatchList: React.FC<MatchListProps> = ({
         {matches.map((match) => {
           const zone = getDistanceZone(match.distance);
           const zoneInfo = getZoneInfo(zone);
+          const isSameDestination = match.destinationDistance <= 100;
+          const routeLabel = isSameDestination
+            ? 'Same Destination'
+            : `Nearby Route · ${formatDistance(match.destinationDistance)}`;
+          const routeColor = isSameDestination ? '#a78bfa' : '#38bdf8';
           
           return (
             <div
@@ -103,6 +108,12 @@ const MatchList: React.FC<MatchListProps> = ({
                     📍 {formatDistance(match.distance)}
                   </span>
                   <span className="destination">🎯 {match.destination.destinationName}</span>
+                  <span
+                    className="route-badge"
+                    style={{ color: routeColor, borderColor: `${routeColor}55`, background: `${routeColor}18` }}
+                  >
+                    {isSameDestination ? '📌' : '🛣️'} {routeLabel}
+                  </span>
                   <span className="phone">📞 {match.destination.phone}</span>
                 </div>
               </div>
@@ -352,6 +363,19 @@ const styles = `
     display: flex;
     align-items: center;
     gap: 6px;
+  }
+
+  .route-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 20px;
+    border: 1px solid;
+    letter-spacing: 0.02em;
+    width: fit-content;
   }
 
   .distance {
