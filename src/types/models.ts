@@ -3,6 +3,15 @@
  * Contains interfaces for all data models used throughout the app
  */
 
+export type FirestoreTimeValue =
+  | number
+  | null
+  | {
+      seconds: number;
+      nanoseconds: number;
+      toMillis?: () => number;
+    };
+
 // User profile stored in Firestore users/{uid}
 export interface UserProfile {
   uid: string;
@@ -59,9 +68,9 @@ export interface LiveLocation {
 export interface Chat {
   id?: string;
   members: string[]; // [uid1, uid2]
-  createdAt: number;
+  createdAt: FirestoreTimeValue;
   lastMessage?: string;
-  lastMessageAt?: number;
+  lastMessageAt?: FirestoreTimeValue;
 }
 
 // Message document stored in Firestore chats/{chatId}/messages/{messageId}
@@ -69,7 +78,7 @@ export interface Message {
   id?: string;
   senderId: string;
   text: string;
-  createdAt: number;
+  createdAt: FirestoreTimeValue;
 }
 
 // Matched user with live location and distance info (used in UI)
