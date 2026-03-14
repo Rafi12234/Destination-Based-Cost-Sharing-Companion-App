@@ -328,8 +328,8 @@ const MapPage: React.FC = () => {
       async (destinations) => {
         // Filter destinations:
         // 1. Not my own destination
-        // 2. Destination matches (within 500m)
-        // 3. User is within 2km of me
+        // 2. User is within 2km of me (MANDATORY)
+        // 3. Destination is within 1.5km of mine (same area / same route direction)
         const matchingDestinations = destinations.filter((dest) => {
           if (dest.uid === user?.uid) return false;
 
@@ -338,10 +338,10 @@ const MapPage: React.FC = () => {
             lng: dest.destinationLng,
           };
 
-          // Check if destinations match (within 500m)
+          // Check if destinations are within 1.5km of each other
           if (!destinationsMatch(destinationCoords, destTarget)) return false;
 
-          // Check if user is within 2km of my location
+          // Mandatory: user must be within 2km of my current location
           if (myLocation) {
             const userLocation: Coordinates = {
               lat: dest.currentLat,
@@ -375,6 +375,11 @@ const MapPage: React.FC = () => {
             const distance = myLocation
               ? haversineDistance(myLocation, userLocation)
               : Infinity;
+            const destTarget: Coordinates = {
+              lat: dest.destinationLat,
+              lng: dest.destinationLng,
+            };
+            const destinationDistance = haversineDistance(destinationCoords, destTarget);
 
             return {
               uid: dest.uid,
@@ -382,6 +387,7 @@ const MapPage: React.FC = () => {
               destination: dest,
               distance,
               isNear: distance <= 2000,
+              destinationDistance,
             };
           })
           .sort((a, b) => a.distance - b.distance);
@@ -458,8 +464,8 @@ const MapPage: React.FC = () => {
         
         // Filter destinations:
         // 1. Not my own destination
-        // 2. Destination matches (within 500m)
-        // 3. User is within 2km of me
+        // 2. User is within 2km of me (MANDATORY)
+        // 3. Destination is within 1.5km of mine (same area / same route direction)
         const matchingDestinations = destinations.filter((dest) => {
           if (dest.uid === user?.uid) return false;
 
@@ -468,10 +474,10 @@ const MapPage: React.FC = () => {
             lng: dest.destinationLng,
           };
 
-          // Check if destinations match (within 500m)
+          // Check if destinations are within 1.5km of each other
           if (!destinationsMatch(destCoords, destTarget)) return false;
 
-          // Check if user is within 2km of my location
+          // Mandatory: user must be within 2km of my current location
           if (currentLocation) {
             const userLocation: Coordinates = {
               lat: dest.currentLat,
@@ -505,6 +511,11 @@ const MapPage: React.FC = () => {
             const distance = currentLocation
               ? haversineDistance(currentLocation, userLocation)
               : Infinity;
+            const destTarget: Coordinates = {
+              lat: dest.destinationLat,
+              lng: dest.destinationLng,
+            };
+            const destinationDistance = haversineDistance(destCoords, destTarget);
 
             return {
               uid: dest.uid,
@@ -512,6 +523,7 @@ const MapPage: React.FC = () => {
               destination: dest,
               distance,
               isNear: distance <= 2000,
+              destinationDistance,
             };
           })
           .sort((a, b) => a.distance - b.distance);
