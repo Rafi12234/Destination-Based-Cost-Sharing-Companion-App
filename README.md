@@ -309,6 +309,20 @@ Build the app and deploy the `dist` folder to:
 - AWS S3 + CloudFront
 - Any static file hosting
 
+### Vercel Notes (Important for React Router)
+
+If direct URL refresh on routes like `/login`, `/register`, `/map`, or `/chat/:chatId` shows `404: NOT_FOUND`, Vercel needs SPA rewrites.
+
+This project includes `vercel.json` with:
+
+```json
+{
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}
+```
+
+After adding or changing `vercel.json`, redeploy the project on Vercel.
+
 ## Troubleshooting
 
 ### Location not working
