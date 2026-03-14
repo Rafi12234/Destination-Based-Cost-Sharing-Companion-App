@@ -246,9 +246,20 @@ const MapView: React.FC<MapViewProps> = ({
   // Route state
   const [activeRoute, setActiveRoute] = useState<RouteInfo | null>(null);
   const [isLoadingRoute, setIsLoadingRoute] = useState(false);
+  const [hasAutoCentered, setHasAutoCentered] = useState(false);
   
-  // Default center (will be updated when location is available)
-  const defaultCenter: Coordinates = myLocation || { lat: 40.7128, lng: -74.006 };
+  // Default center in Bangladesh (used only before geolocation is available)
+  const defaultCenter: Coordinates = myLocation || { lat: 23.8103, lng: 90.4125 };
+
+  const shouldAutoCenter = Boolean(myLocation) && !hasAutoCentered;
+
+  const handleMapCenterComplete = () => {
+    if (shouldAutoCenter) {
+      setHasAutoCentered(true);
+      return;
+    }
+    onRecenterComplete?.();
+  };
   
   // Handle marker click to show route
   const handleMarkerClick = async (match: MatchedUser) => {
@@ -298,12 +309,12 @@ const MapView: React.FC<MapViewProps> = ({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         
-        {/* Update map center when recenter is requested */}
+        {/* Auto-center once after location is available, then allow manual recenter */}
         {myLocation && (
           <MapCenter 
             center={myLocation} 
-            shouldRecenter={shouldRecenter}
-            onRecenterComplete={onRecenterComplete}
+            shouldRecenter={shouldRecenter || shouldAutoCenter}
+            onRecenterComplete={handleMapCenterComplete}
           />
         )}
         
